@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="description" content="X-World: Controllable Multi-Agent World Models for Scalable End-to-End Driving" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>X-World: Controllable Multi-Agent World Models for Scalable End-to-End Driving</title>
+
+  <!-- FONTS & STYLES -->
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="icon" href="static/images/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  
+<section class="hero" style="background: url('static/imgs/cover.png') no-repeat center center fixed; background-size: cover;">
+  <div class="hero-body has-text-centered" style="background-color: rgba(255,255,255,0.85);">
+    <h1 class="title is-1">X-World:<br>Controllable Multi-Agent World Models<br> for Scalable End-to-End Driving</h1>
+    
+    <p>
+      <strong> GWM Team</strong>
+      <!-- <strong>Chunli Peng</strong><sup>*</sup>&nbsp;&nbsp;&nbsp;
+      <strong>Zexiang Liu</strong><sup>*</sup>&nbsp;&nbsp;&nbsp;
+      <strong>Boyang Wang</strong><sup>*†</sup>&nbsp;&nbsp;&nbsp;
+      <strong>Yifan Zhang</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Qi Cui</strong><br>
+      <strong>Fei Kang</strong>&nbsp;&nbsp;&nbsp;
+      
+      <strong>Biao Jiang</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Mengyin An</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Yangyang Ren</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Baixin Xu</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Hao-Xiang Guo</strong><br> 
+
+      <strong>Kaixiong Gong</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Size Wu</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Wei Li</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Xuchen Song</strong>&nbsp;&nbsp;&nbsp;
+      <strong>Yang Liu</strong><sup>‡</sup>&nbsp;&nbsp;&nbsp;
+      <strong>Yangguang Li</strong><sup>‡</sup>&nbsp;&nbsp;&nbsp;
+      <strong>Yahui Zhou</strong> -->
+    </p>
+    <p><em>XPeng Motors</em></p>
+  
+    <p style="margin-top:1rem;">
+      <a href="" class="button is-dark is-small is-rounded">
+        <span class="icon"><i class="ai ai-arxiv"></i></span><span>Technical Report</span>
+      </a>
+      <a href="" class="button is-dark is-small is-rounded">
+        <span class="icon"><i class="fab fa-github"></i></span><span>GitHub</span>
+      </a>
+      <a href="" class="button is-dark is-small is-rounded">
+        <span class="icon">🤗</span><span>HuggingFace</span>
+      </a>
+<!--       <a href="#" class="button is-dark is-small is-rounded">
+        <span class="icon">🚀</span><span>Dataset (Comming soon)</span>
+      </a> -->
+    </p>
+  </div>
+</section>
+<!-- ABSTRACT -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-2 has-text-centered">Abstract</h2>
+    
+    <!-- Abstract Text -->
+    <div class="content has-text-justified">
+      Scalable and reliable evaluation is increasingly critical in the end-to-end era of autonomous driving, where Vision-Language-Action (VLA) policies directly map raw sensor streams to driving actions. Yet, current evaluation pipelines still rely heavily on real-world road testing, which is costly, biased toward limited scenario coverage, and difficult to reproduce. These challenges motivate a real-world simulator that can generate realistic future observations under proposed actions, while remaining controllable and stable over long horizons. We present X-World, an action-conditioned multi-camera generative world model that simulates future observations directly in video space. Given synchronized multi-view camera history and a future action sequence, X-World generates future multi-camera video streams that follow the commanded actions. To ensure reproducible and editable scene rollouts, X-World supports optional controls over dynamic traffic agents and static road elements, and retains a text-prompt interface for appearance-level control (e.g., weather and time of day). Beyond world simulation, X-World enables video style transfer by conditioning on appearance prompts while preserving the underlying action and scene dynamics. At the core of X-World a multi-view latent video generator designed to explicitly encourage cross-view geometric consistency and temporal coherence under diverse control signals. Experiments show that X-World achieves high-quality multi-view video generation with (i) strong view consistency across cameras, (ii) stable temporal dynamics over long rollouts, and (iii) high controllability with strict action following and faithful adherence to optional scene controls. These properties make X-World a practical foundation for scalable and reproducible evaluation. Its streaming, interactive rollout interface further makes X-World well-suited for online reinforcement learning of end-to-end autonomous driving systems through closed-loop simulation.
+      </div>
+
+    <!-- Video (placed directly below abstract text) -->
+    <div style="margin-top: 2rem;">
+      <video class="has-ratio" controls style="width: 100%; aspect-ratio: 16 / 9;">
+        <source src="static/videos/matrix-game2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+</section>
+
+<!-- Method -->
+<section class="section">
+
+    <!-- Human Evaluation -->
+
+    <div class="container is-max-desktop">
+
+    <h2 class="title is-2 has-text-centered">Model Overview</h2>
+    <div class="box mt-6"> 
+      <p><strong> The foundation model is derived from WanX. By removing the text branch and adding action modules, the model predicts next frames only from visual contents and corresponding actions.</strong></p>
+      <div class="table-container">
+        <img src="static/imgs/architecture.png" alt="Matrix Game" style="width: 100%; height: auto;">
+      </div> 
+    </div>
+  </div>
+      
+</section>
+
+<!--
+# Benchmark
+<section class="section">
+
+  # GameWorld Score Benchmark  
+
+  <div class="container is-max-desktop"> 
+  <h2 class="title is-2 has-text-centered">GameWorld Score Benchmark</h2>
+  <div class="box mt-6"> 
+    <p><strong>To facilitate the evaluation and comparison of Minecraft world models, GameWorld Score is introduced as a unified benchmark that assesses not only the perceptual quality of generated videos but also their controllability and physical plausibility. The benchmark decomposes world model performance into eight distinct dimensions, each capturing a specific aspect of video generation.</strong></p>
+    <div class="table-container">
+      <img src="static/imgs/benchmark.png" alt="Matrix Game" style="width: 100%; height: auto;">
+    </div> 
+
+    <p><strong>Metric Descriptions</strong>:</p>
+    <ul>
+      <li><strong>Image Quality</strong> / <strong>Aesthetic Quality</strong>: Visual fidelity and perceptual appeal of generated frames</li>
+      <li><strong>Temporal Consistency</strong> / <strong>Motion Smoothness</strong>: Temporal coherence and smoothness between frames</li>
+      <li><strong>Keyboard Accuracy</strong> / <strong>Mouse Accuracy</strong>: Accuracy in following user control signals</li>
+      <li><strong>Object Consistency</strong>: Geometric stability and consistency of objects over time</li>
+      <li><strong>Scenario Consistency</strong>: Scenario consistency over time</li>
+    </ul>
+  </div>
+</div>
+    
+</section>
+-->
+
+<!-- Comparison -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-2 has-text-centered">Performance Comparison</h2>
+
+    <!-- GameWorld Score Benchmark -->
+    <div class="box">
+      <h3 class="title is-4"> GameWorld Score Benchmark Comparison</h3>
+      <p><strong>Matrix-Game 2.0 achieves excellent performance on the GameWorld Score benchmark in Minecraft scenes.</strong></p>
+      <div class="table-container">
+        <table class="table is-fullwidth is-hoverable">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Image Quality ↑</th>
+              <th>Aesthetic Quality↑</th>
+              <th>Temporal Cons. ↑</th>
+              <th>Motion Smooth. ↑</th>
+              <th>Keyboard Acc. ↑</th>
+              <th>Mouse Acc. ↑</th>
+              <th>Object Cons. ↑</th>
+              <th>Scenario Cons. ↑</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Oasis</td>
+              <td>0.27</td>
+              <td>0.27</td>
+              <td>0.82</td>
+              <td><span class="has-text-weight-bold">0.99</span></td>
+              <td>0.73</td>
+              <td>0.56</td>
+              <td>0.18</td>
+              <td><span class="has-text-weight-bold">0.84</span></td>
+            </tr>
+            <tr class="has-background-success-light">
+              <td><span class="has-text-weight-bold">Ours</span></td>
+              <td><span class="has-text-weight-bold">0.61</span></td>
+              <td><span class="has-text-weight-bold">0.50</span></td>
+              <td><span class="has-text-weight-bold">0.94</span></td>
+              <td>0.98</td>
+              <td><span class="has-text-weight-bold">0.91</span></td>
+              <td><span class="has-text-weight-bold">0.95</span></td>
+              <td><span class="has-text-weight-bold">0.64</span></td>
+              <td>0.80</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</section>
+  <!-- VIDEO DEMOS -->
+<section class="section">
+  <div class="container is-max-desktop has-text-centered">
+    <h2 class="title is-2">Generation across Diverse Scene Styles</h2>
+    <p class="subtitle has-text-left">Matrix-Game 2.0 demonstrates strong generative capabilities across diverse scene styles, featuring varying visual aesthetics and terrains.</p>
+    <div class="video-grid" id="videoContainer_unreals"></div>
+  </div>
+</section>
+<section class="section">
+  <div class="container is-max-desktop has-text-centered">
+    <h2 class="title is-2">Generation across GTA Scenes</h2>
+    <p class="subtitle has-text-left">Matrix-Game 2.0 demonstrates the ability to generate precisely controlled videos in GTA scenarios, while also shows the capability for modeling scene dynamics.</p>
+    <div class="video-grid" id="videoContainer_gta"></div>
+  </div>
+</section>
+<section class="section">
+  <div class="container is-max-desktop has-text-centered">
+    <h2 class="title is-2">Long Video Generation</h2>
+    <p class="subtitle has-text-left">Matrix-Game 2.0 demonstrates strong auto-regressive generation capabilities for producing long videos.</p>
+    <div class="video-grid" id="videoContainer_longs"></div>
+  </div>
+</section>
+<section class="section">
+  <div class="container is-max-desktop has-text-centered">
+    <h2 class="title is-2">Generation across MC Scenes</h2>
+    <p class="subtitle has-text-left">Matrix-Game 2.0 demonstrates strong generative capabilities in Minecraft scenes, adapting to diverse visual styles and terrains.</p>
+    <div class="video-grid" id="videoContainer_mc"></div>
+  </div>
+</section>
+<section class="section">
+  <div class="container is-max-desktop has-text-centered">
+    <h2 class="title is-2">Generation across TempleRun Scenes</h2>
+    <p class="subtitle has-text-left">Matrix-Game 2.0 can also be applied to generate interactive videos in TempleRun scenes.</p>
+    <div class="video-grid" id="videoContainer_templerun"></div>
+  </div>
+</section>
+<!-- ACK / CITATION -->
+<section class="section">
+<div class="container is-max-desktop">
+      <h2 class="title is-3">Acknowledgement</h2>
+      <div class="content has-text-justified">
+        
+        <p>We would like to express our gratitude to:</p>
+
+<ul>
+  <li><a href="https://github.com/huggingface/diffusers">Diffusers</a> for their excellent diffusion model framework</li>
+  <li><a href="https://github.com/SkyworkAI/SkyReels-V2">SkyReels-V2</a> for their strong base model</li>
+  <li><a href="https://github.com/guandeh17/Self-Forcing">Self-Forcing</a> for their excellent work</li>
+  <li><a href="https://github.com/minerllabs/minerl">MineRL</a> for their excellent gym framework</li>
+  <li><a href="https://github.com/openai/Video-Pre-Training">Video-Pre-Training</a> for their accurate Inverse Dynamics Model</li>
+  <li><a href="https://github.com/KwaiVGI/GameFactory">GameFactory</a> for their idea of action control module</li>
+</ul>
+
+<p>We are grateful to the broader research community for their open exploration and contributions to the field of interactive world generation.</p>
+</div>
+      <h2 class="title is-3">Citation</h2>
+<pre>
+<code>
+  @article{he2025matrix,
+    title={Matrix-Game 2.0: An Open-Source, Real-Time, and Streaming Interactive World Model},
+    author={He, Xianglong and Peng, Chunli and Liu, Zexiang and Wang, Boyang and Zhang, Yifan and Cui, Qi and Kang, Fei and Jiang, Biao and An, Mengyin and Ren, Yangyang and Xu, Baixin and Guo, Hao-Xiang and Gong, Kaixiong and Wu, Cyrus and Li, Wei and Song, Xuchen and Liu, Yang and Li, Eric and Zhou, Yahui},
+    journal={arXiv preprint arXiv:2508.13009},
+    year={2025}
+  }
+</code>
+</pre>
+</div>
+</section>
+
+  <footer class="footer">
+    <div class="container"><div class="content has-text-centered">Template adapted from <a href="https://nerfies.github.io/">NERFies</a>, CC BY‑SA 4.0.</div></div>
+  </footer>
+
+  <!-- JS: Dynamic Video Loader (max 5 rows) -->
+  <script>
+  // 动态创建视频元素
+  function createVideoElement(path) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.preload = 'metadata';
+      video.style.width = '100%';
+      video.style.height = 'auto';
+      video.style.borderRadius = '8px';
+      video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+      
+      // 创建source元素以确保更好的兼容性
+      const source = document.createElement('source');
+      source.src = path;
+      source.type = 'video/mp4';
+      video.appendChild(source);
+      
+      // 添加错误处理
+      video.addEventListener('error', function(e) {
+          console.error('视频加载失败:', path);
+          // 在视频位置显示错误信息
+          const errorDiv = document.createElement('div');
+          errorDiv.style.cssText = `
+              background: #f8d7da;
+              border: 1px solid #f5c6cb;
+              border-radius: 8px;
+              padding: 20px;
+              text-align: center;
+              color: #721c24;
+              min-height: 200px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+          `;
+          errorDiv.innerHTML = `
+              <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+              <strong>视频加载失败</strong><br>
+              <small>${path}</small>
+          `;
+          video.parentNode.replaceChild(errorDiv, video);
+      });
+      
+      video.addEventListener('loadedmetadata', function() {
+          console.log('视频加载成功:', path);
+      });
+      
+      return video;
+  }
+  
+  const video_gta=['static/videos/gta/gta1.mp4', 'static/videos/gta/gta2.mp4', 'static/videos/gta/gta3.mp4', 'static/videos/gta/gta4.mp4', 'static/videos/gta/gta5.mp4', 'static/videos/gta/gta6.mp4', 'static/videos/gta/gta7.mp4', 'static/videos/gta/gta8.mp4']
+  const video_mc=['static/videos/mc/mc1.mp4', 'static/videos/mc/mc2.mp4', 'static/videos/mc/mc3.mp4', 'static/videos/mc/mc4.mp4']
+  const video_unreals=['static/videos/unreals/wild1.mp4', 'static/videos/unreals/wild2.mp4', 'static/videos/unreals/wild3.mp4', 'static/videos/unreals/wild4.mp4', 'static/videos/unreals/wild5.mp4', 'static/videos/unreals/wild6.mp4', 'static/videos/unreals/wild7.mp4', 'static/videos/unreals/wild8.mp4']
+  const video_longs=['static/videos/longvideos/long1.mp4', 'static/videos/longvideos/long2.mp4', 'static/videos/longvideos/long3.mp4', 'static/videos/longvideos/long4.mp4']
+  const video_templerun=['static/videos/templerun/temple1.mp4', 'static/videos/templerun/temple2.mp4', 'static/videos/templerun/temple3.mp4', 'static/videos/templerun/temple4.mp4']
+  
+  function initVideoWall() { 
+      console.log('开始初始化视频墙...');
+      
+      // 定义所有视频容器和对应的视频数组
+      const sections = [
+          { containerId: 'videoContainer_unreals', videos: video_unreals, name: 'Unreal场景' },
+          { containerId: 'videoContainer_gta', videos: video_gta, name: 'GTA场景' },
+          { containerId: 'videoContainer_mc', videos: video_mc, name: 'MC场景' },
+          { containerId: 'videoContainer_longs', videos: video_longs, name: '长视频' },
+          { containerId: 'videoContainer_templerun', videos: video_templerun, name: 'TempleRun场景' }
+      ];
+      
+      sections.forEach(section => {
+          const container = document.getElementById(section.containerId);
+          if (!container) {
+              console.warn(`容器 ${section.containerId} 未找到`);
+              return;
+          }
+          
+          if (!section.videos || section.videos.length === 0) {
+              console.warn(`${section.name} 视频数组为空`);
+              return;
+          }
+          
+          console.log(`正在加载 ${section.name}，共 ${section.videos.length} 个视频`);
+          
+          // 清空容器内容
+          container.innerHTML = '';
+          
+          // 为每个视频创建元素
+          section.videos.forEach((path, index) => {
+              try {
+                  const videoElement = createVideoElement(path);
+                  container.appendChild(videoElement);
+                  console.log(`已添加 ${section.name} 视频 ${index + 1}: ${path}`);
+              } catch (error) {
+                  console.error(`创建视频元素失败 ${path}:`, error);
+              }
+          });
+          
+          console.log(`${section.name} 加载完成`);
+      });
+      
+      console.log('视频墙初始化完成！');
+  }
+  // 全局调试函数
+  window.debugVideoWall = function() {
+      console.log('=== 视频墙调试信息 ===');
+      console.log('视频数组:');
+      console.log('- GTA视频:', video_gta.length, '个');
+      console.log('- MC视频:', video_mc.length, '个');  
+      console.log('- Unreals视频:', video_unreals.length, '个');
+      console.log('- 长视频:', video_longs.length, '个');
+      console.log('- TempleRun视频:', video_templerun.length, '个');
+      
+      console.log('容器状态:');
+      console.log('- unreals容器:', document.getElementById('videoContainer_unreals') ? '存在' : '不存在');
+      console.log('- gta容器:', document.getElementById('videoContainer_gta') ? '存在' : '不存在');
+      console.log('- mc容器:', document.getElementById('videoContainer_mc') ? '存在' : '不存在');
+      console.log('- longs容器:', document.getElementById('videoContainer_longs') ? '存在' : '不存在');
+      console.log('- templerun容器:', document.getElementById('videoContainer_templerun') ? '存在' : '不存在');
+      
+      // 检查每个容器中的视频元素数量
+      ['unreals', 'gta', 'mc', 'longs', 'templerun'].forEach(type => {
+          const container = document.getElementById(`videoContainer_${type}`);
+          if (container) {
+              const videos = container.querySelectorAll('video');
+              const errors = container.querySelectorAll('[style*="border: 2px dashed"], [style*="border: 1px solid #ffeaa7"]');
+              console.log(`- ${type}容器: ${videos.length}个视频, ${errors.length}个错误`);
+          }
+      });
+  };
+
+  // 页面加载时执行
+  window.onload = function() {
+      console.log('页面加载完成，开始初始化视频墙...');
+      initVideoWall();
+      console.log('初始化完成，可以使用 debugVideoWall() 查看调试信息');
+  };
+  </script>
+</body>
+</html>
