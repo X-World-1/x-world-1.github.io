@@ -158,16 +158,27 @@ body {
 .video-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  padding: 20px;
+  gap: 12px;
+  padding: 0;
   max-width: 1200px;
   margin: 0 auto;
 }
 video {
   width: 100%;
-  aspect-ratio: 16/9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+  box-shadow: 0 0.5em 1em -0.125em rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.02);
+}
+/* 全屏模式：取消裁切，完整显示视频 */
+video:fullscreen,
+video:-webkit-full-screen {
+  object-fit: contain !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+  background: #000;
 }
 @media (max-width: 768px) {
   .video-grid { grid-template-columns: repeat(2, 1fr); }

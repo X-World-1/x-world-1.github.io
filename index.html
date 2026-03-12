@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     .hero-bg {
-      background-image: url('static/imgs/cover.png');
+      background-image: url('static/imgs/cover1.png');
       background-repeat: no-repeat;
       background-position: center center;
       background-size: cover;
@@ -224,28 +224,28 @@
 <section class="section">
   <div class="container is-max-desktop has-text-centered">
     <h2 class="title is-2">Action-Conditioned Multi-Camera Generation</h2>
-    <p class="subtitle has-text-justified">X-World generates future multi-camera video streams that faithfully follow the commanded actions, while maintaining strong cross-view geometric consistency.</p>
+    <p class="subtitle has-text-justified">X-World generates future <strong>multi-camera video streams</strong> that faithfully follow the <strong>commanded actions</strong>, while maintaining strong <strong>cross-view geometric consistency</strong>.</p>
     <div class="video-grid" id="videoContainer_action" style="grid-template-columns: repeat(3, 1fr);"></div>
   </div>
 </section>
 <section class="section">
   <div class="container is-max-desktop has-text-centered">
     <h2 class="title is-2">Multi-Agent Controllable Generation</h2>
-    <p class="subtitle has-text-justified">X-World supports optional controls over dynamic traffic agents and static road elements, enabling reproducible and editable scene rollouts.</p>
+    <p class="subtitle has-text-justified">X-World supports optional controls over <strong>dynamic traffic agents</strong> and <strong>static road elements</strong>, enabling <strong>reproducible and editable scene rollouts</strong>.</p>
     <div class="video-grid" id="videoContainer_agent" style="grid-template-columns: repeat(2, 1fr);"></div>
   </div>
 </section>
 <section class="section">
   <div class="container is-max-desktop has-text-centered">
     <h2 class="title is-2">Long-Horizon Rollout</h2>
-    <p class="subtitle has-text-justified">X-World achieves stable temporal dynamics over long rollouts, demonstrating strong temporal coherence in extended simulation.</p>
-    <div class="video-grid" id="videoContainer_long"></div>
+    <p class="subtitle has-text-justified">X-World achieves <strong>stable temporal dynamics</strong> over long rollouts, demonstrating <strong>strong temporal coherence</strong> in extended simulation.</p>
+    <div class="video-grid" id="videoContainer_long" style="grid-template-columns: repeat(2, 1fr);"></div>
   </div>
 </section>
 <section class="section">
   <div class="container is-max-desktop has-text-centered">
     <h2 class="title is-2">World Style Transfer</h2>
-    <p class="subtitle has-text-justified">X-World enables video style transfer by conditioning on appearance prompts while preserving the underlying action and scene dynamics. Supported controls include <strong>weather conditions</strong> (e.g., rain, snow), <strong>time of day</strong> (e.g., day/night), and <strong>geographic region</strong> (e.g., China, Germany), enabling scalable scenario diversity without re-collecting real data.</p>
+    <p class="subtitle has-text-justified">X-World enables <strong>world style transfer</strong> by conditioning on appearance prompts while preserving the underlying action and scene dynamics. Supported controls include <strong>weather conditions</strong> (e.g., rain, snow), <strong>time of day</strong> (e.g., day/night), and <strong>geographic region</strong> (e.g., China, Germany), enabling <strong>scalable scenario diversity</strong> without re-collecting real data.</p>
     <div class="video-grid" id="videoContainer_style"></div>
   </div>
 </section>
@@ -271,11 +271,11 @@
   function createVideoElement(path) {
       const video = document.createElement('video');
       video.controls = true;
-      video.preload = 'metadata';
-      video.style.width = '100%';
-      video.style.height = 'auto';
-      video.style.borderRadius = '8px';
-      video.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;           // 必须静音才能自动播放
+      video.playsInline = true;     // iOS 内联播放
+      video.preload = 'auto';
       
       const source = document.createElement('source');
       source.src = path;
@@ -330,7 +330,7 @@
   ];
   const video_long = [
       'static/videos/long/rank_8_8466826-7-0_ema_causal_83.mp4',
-      'static/videos/long/rank_8_8466826-7-0_ema_causal_83 copy.mp4',
+      // 'static/videos/long/rank_8_8466826-7-0_ema_causal_83 copy.mp4',
       // 'static/videos/long/rank_8_8466826-7-0_ema_causal_83 copy_text_edited.mp4',
       'static/videos/long/rank_12_6777324-17-0_ema_causal_83.mp4'
   ];
