@@ -82,6 +82,28 @@
   </div>
 </section>
 
+<!-- Data Preparation -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-2 has-text-centered">Data Preparation</h2>
+
+    <div class="box mt-6">
+      <p>
+        <strong>
+          The video data is recorded at a rate of 12 frames per second (FPS). Each frame provides a comprehensive 360-degree surround-view through seven distinct, calibrated camera perspectives.
+        </strong>
+      </p>
+
+      <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+        <img src="static/imgs/camera.png" alt="X-World" style="width: 50%; height: auto;">
+        <img src="static/imgs/pie.jpg" alt="X-World" style="width: 50%; height: auto;">
+      </div>
+    </div>
+  </div>
+</section>
+      
+</section>
+
 <!-- Method -->
 <section class="section">
 
@@ -91,9 +113,9 @@
 
     <h2 class="title is-2 has-text-centered">Model Overview</h2>
     <div class="box mt-6"> 
-      <p><strong> The foundation model is derived from WanX. By removing the text branch and adding action modules, the model predicts next frames only from visual contents and corresponding actions.</strong></p>
+      <p><strong> We propose X-World, a generative world model formulated as an action-conditioned multi-camera video generation model. Given a short history of synchronized multi-view camera streams, the model predicts the future camera observations that would result from executing a specified future action sequence.</strong></p>
       <div class="table-container">
-        <img src="static/imgs/architecture.png" alt="Matrix Game" style="width: 100%; height: auto;">
+        <img src="static/imgs/xworld_v1.jpg" alt="X-World" style="width: 100%; height: auto;">
       </div> 
     </div>
   </div>
