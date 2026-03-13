@@ -328,12 +328,12 @@
       'static/videos/vru_cutin/sample_5795613_75_c-21417971-7912-3903-bb6e-56e4c92911b7_anchor0_pred_rank0.mp4'
   ];
   const video_style = [
-      'static/videos/style/baseline_sample_8_1_pred.mp4',
-      'static/videos/style/china_sample_8_1_pred.mp4',
-      'static/videos/style/daynight_sample_8_1_pred.mp4',
-      'static/videos/style/rain_sample_8_1_pred.mp4',
-      'static/videos/style/snow_sample_8_1_pred.mp4',
-      'static/videos/style/weather_sample_8_1_pred.mp4'
+      { path: 'static/videos/style/baseline_sample_8_1_pred.mp4', label: 'Baseline' },
+      { path: 'static/videos/style/rain_sample_8_1_pred.mp4', label: '🌧️ Rain' },
+      { path: 'static/videos/style/snow_sample_8_1_pred.mp4', label: '❄️ Snow' },
+      { path: 'static/videos/style/daynight_sample_8_1_pred.mp4', label: '🌙 Day → Night' },
+      { path: 'static/videos/style/china_sample_8_1_pred.mp4', label: '🇩🇪 Germany → 🇨🇳 China' },
+      { path: 'static/videos/style/weather_sample_8_1_pred.mp4', label: '🌥️ Weather' }
   ];
   const video_long = [
       'static/videos/long/rank_8_8466826-7-0_ema_causal_83.mp4',
@@ -356,12 +356,26 @@
           if (!section.videos || section.videos.length === 0) return;
           
           container.innerHTML = '';
-          section.videos.forEach((path) => {
+          section.videos.forEach((item) => {
               try {
+                  const path = (typeof item === 'string') ? item : item.path;
+                  const label = (typeof item === 'string') ? null : item.label;
                   const videoElement = createVideoElement(path);
-                  container.appendChild(videoElement);
+                  
+                  if (label) {
+                      const wrapper = document.createElement('div');
+                      wrapper.className = 'video-item';
+                      wrapper.appendChild(videoElement);
+                      const labelEl = document.createElement('div');
+                      labelEl.className = 'video-label';
+                      labelEl.textContent = label;
+                      wrapper.appendChild(labelEl);
+                      container.appendChild(wrapper);
+                  } else {
+                      container.appendChild(videoElement);
+                  }
               } catch (error) {
-                  console.error(`Failed to create video element for ${path}:`, error);
+                  console.error(`Failed to create video element for ${item}:`, error);
               }
           });
       });

@@ -158,7 +158,7 @@ body {
 .video-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 24px 12px;
   padding: 0;
   max-width: 1200px;
   margin: 0 auto;
@@ -178,7 +178,30 @@ video:-webkit-full-screen {
   width: 100vw !important;
   height: 100vh !important;
   border-radius: 0 !important;
-  background: #000;
+}
+
+/* 视频章节交替背景色 */
+.section-alt {
+  background-color: #f7f8fa;
+}
+
+/* 视频标签样式 */
+.video-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.video-item video {
+  width: 100%;
+  border-radius: 10px;
+}
+.video-label {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a4a4a;
+  letter-spacing: 0.3px;
+  text-align: center;
 }
 @media (max-width: 768px) {
   .video-grid { grid-template-columns: repeat(2, 1fr); }
