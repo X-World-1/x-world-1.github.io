@@ -11446,7 +11446,7 @@ a.has-text-danger-dark:focus,a.has-text-danger-dark:hover {
 .hero-body {
     flex-grow: 1;
     flex-shrink: 0;
-    padding: 27rem 1.5rem 5rem;
+    padding: 5rem 1.5rem 5rem;
 }
 
 .section {
