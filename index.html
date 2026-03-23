@@ -1,389 +1,1287 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="description" content="X-World: Controllable Multi-Agent World Models for Scalable End-to-End Driving" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>X-World: Controllable Ego-Centric Multi-Camera World Models for Scalable End-to-End Driving</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-World - 可控制的以自我为中心的多摄像头世界模型</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0d0d0f;
+            --bg-tertiary: #161618;
+            --bg-card: #1c1c1e;
+            --bg-elevated: #242426;
+            --text-primary: #f5f5f7;
+            --text-secondary: #98989d;
+            --text-tertiary: #6e6e73;
+            --accent: #0a84ff;
+            --accent-light: #409cff;
+            --accent-subtle: rgba(10, 132, 255, 0.15);
+            --gradient-accent: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 50%, #bf5af2 100%);
+            --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06), transparent 40%);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.12);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 60px rgba(10, 132, 255, 0.15);
+            --font-cn: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            --font-en: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+        }
 
-  <!-- FONTS & STYLES -->
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans" rel="stylesheet">
-  <link rel="stylesheet" href="static/css/bulma.min.css">
-  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
-  <link rel="stylesheet" href="static/css/index.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="icon" href="static/imgs/x.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    .hero-bg {
-      background-image: url('static/imgs/cover2.png');
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-size: cover;
-      background-attachment: fixed; /* 桌面端视差效果 */
-      max-height: 100vh;            /* 最多占满一屏 */
-      overflow: hidden;
-    }
-    .hero-bg .hero-body {
-      max-height: 100vh;
-      box-sizing: border-box;
-      overflow: visible;
-      /* 用 flexbox 让文字始终垂直水平居中 */
-      /* display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 3rem 1.5rem; */
-    }
-    /* 平板及以下：取消 fixed，避免 iOS/Android 渲染异常 */
-    @media (max-width: 1024px) {
-      .hero-bg {
-        background-attachment: scroll;
-        background-position: center top;
-      }
-    }
-    /* 手机端：背景居中显示关键内容区域 */
-    @media (max-width: 768px) {
-      .hero-bg {
-        background-size: cover;
-        background-position: center center;
-      }
-      .hero-bg .hero-body {
-        padding: 2rem 1rem;
-      }
-      .hero-bg .title.is-1 {
-        font-size: 2rem !important;
-      }
-      .hero-bg .title.is-3 {
-        font-size: 1.1rem !important;
-      }
-    }
-  </style>
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: var(--font-cn);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== Typography ===== */
+        h1, h2, h3, h4 {
+            font-family: var(--font-en);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        /* ===== Navigation ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 14px 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-bottom: 1px solid var(--border-subtle);
+            transition: all 0.4s var(--ease-out-expo);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-en);
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff 0%, #a1a1a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 36px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-light);
+            transition: width 0.3s var(--ease-out-expo);
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* ===== Hero Section ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 100px 24px 80px;
+            position: relative;
+            overflow: hidden;
+            background-image: url("img/topbg.jpg");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(800px circle at 50% 0%, rgba(10, 132, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(600px circle at 80% 50%, rgba(94, 92, 230, 0.06) 0%, transparent 40%),
+                radial-gradient(500px circle at 20% 80%, rgba(191, 90, 242, 0.04) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 50px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: heroFadeIn 0.8s var(--ease-out-expo) 0.1s forwards;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(135deg, #34c759, #30d158);
+            border-radius: 50%;
+        }
+
+        .hero h1 {
+            font-size: clamp(56px, 11vw, 120px);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            margin-bottom: 20px;
+            background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: heroFadeIn 0.9s var(--ease-out-expo) 0.2s forwards;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(22px, 4vw, 32px);
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: heroFadeIn 0.9s var(--ease-out-expo) 0.35s forwards;
+        }
+
+        .hero .tagline {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin: 0 auto;
+            line-height: 1.7;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: heroFadeIn 0.9s var(--ease-out-expo) 0.5s forwards;
+        }
+
+        .hero-cta {
+            margin-top: 40px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: heroFadeIn 0.9s var(--ease-out-expo) 0.65s forwards;
+        }
+
+        .hero-cta .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+        
+            border: none;
+          
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+         
+            
+            
+        }
+
+       
+
+        @keyframes heroFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== Sections ===== */
+        section {
+            padding: 100px 0;
+            position: relative;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 600;
+            margin-bottom: 14px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ===== Intro Section ===== */
+        .intro {
+            background: var(--bg-secondary);
+            background-image: url("img/bg_info.jpg");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+        }
+
+        .intro-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 28px;
+            padding: 56px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .intro-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .intro-card h3 {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .intro-card p {
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .intro-visual {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .intro-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.6;
+        }
+
+        /* ===== Core Pillars ===== */
+        .pillars {
+            background: var(--bg-primary);
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .pillars-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pillar-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 40px 32px;
+            transition: all 0.5s var(--ease-out-expo);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-glow);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-light);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pillar-card:hover::before {
+            opacity: 1;
+        }
+
+        .pillar-number {
+            font-family: var(--font-en);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 20px;
+            letter-spacing: 0.05em;
+        }
+
+        .pillar-card h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        .pillar-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            position: relative;
+        }
+
+        .pillar-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-subtle);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .pillar-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--accent-light);
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        /* ===== Architecture Section ===== */
+        .architecture {
+            background: var(--bg-secondary);
+        }
+
+        .arch-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 28px;
+            padding: 56px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .arch-block {
+            padding: 28px 36px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            text-align: center;
+            transition: all 0.4s var(--ease-out-expo);
+            min-width: 160px;
+        }
+
+        .arch-block:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .arch-block.input { border-top: 3px solid #34c759; }
+        .arch-block.process { border-top: 3px solid var(--accent); }
+        .arch-block.output { border-top: 3px solid #ff9f0a; }
+
+        .arch-block h4 {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .arch-block p {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .arch-arrow {
+            font-size: 20px;
+            color: var(--text-tertiary);
+        }
+
+        .arch-note {
+            margin-top: 44px;
+            padding: 24px 32px;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .arch-note p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* ===== Data Section ===== */
+        .data {
+            background: var(--bg-primary);
+                background-image: url("img/date2_img.png");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+        }
+
+        .data-grid {
+display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (max-width: 800px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .camera-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .camera-visual {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 28px;
+        }
+
+        .camera-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(10, 132, 255, 0.4);
+        }
+
+        .camera-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #34c759, #30d158);
+            border-radius: 50%;
+            border: 3px solid var(--bg-tertiary);
+            box-shadow: 0 0 12px rgba(52, 199, 89, 0.4);
+        }
+
+        .camera-point.front { top: 8%; left: 50%; transform: translateX(-50%); }
+        .camera-point.front-left { top: 22%; left: 12%; }
+        .camera-point.front-right { top: 22%; right: 12%; }
+        .camera-point.side-left { top: 50%; left: 2%; transform: translateY(-50%); }
+        .camera-point.side-right { top: 50%; right: 2%; transform: translateY(-50%); }
+        .camera-point.rear-left { bottom: 22%; left: 12%; }
+        .camera-point.rear-right { bottom: 22%; right: 12%; }
+
+        .camera-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            position: absolute;
+        }
+
+        .camera-label.front { top: 2%; left: 50%; transform: translateX(-50%); }
+        .camera-label.front-left { top: 16%; left: 6%; }
+        .camera-label.front-right { top: 16%; right: 6%; }
+        .camera-label.side-left { top: 50%; left: -4%; transform: translateY(-50%); }
+        .camera-label.side-right { top: 50%; right: -4%; transform: translateY(-50%); }
+        .camera-label.rear-left { bottom: 16%; left: 6%; }
+        .camera-label.rear-right { bottom: 16%; right: 6%; }
+
+        .camera-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stat-row {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-row:hover {
+            border-color: var(--border-light);
+            transform: translateX(4px);
+        }
+
+        .stat-label {
+            min-width: 140px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1.2s var(--ease-out-expo);
+        }
+
+        .stat-fill.green { background: linear-gradient(90deg, #34c759, #30d158); }
+        .stat-fill.blue { background: linear-gradient(90deg, #0a84ff, #409cff); }
+        .stat-fill.orange { background: linear-gradient(90deg, #ff9f0a, #ffb340); }
+        .stat-fill.red { background: linear-gradient(90deg, #ff453a, #ff6961); }
+
+        .stat-value {
+            min-width: 50px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-en);
+        }
+
+        /* ===== Demo Section ===== */
+        .demos {
+            background: var(--bg-secondary);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 28px;
+        }
+
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .demo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.5s var(--ease-out-expo);
+        }
+
+        .demo-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-light);
+        }
+
+        .demo-video {
+            aspect-ratio: 16/9;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .demo-video::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .video-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            color: var(--text-tertiary);
+            transition: all 0.3s ease;
+        }
+
+        .demo-card:hover .video-placeholder {
+            color: var(--text-secondary);
+        }
+
+        .play-btn {
+            width: 56px;
+            height: 56px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s var(--ease-out-expo);
+        }
+
+        .demo-card:hover .play-btn {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .play-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-secondary);
+            margin-left: 2px;
+            transition: fill 0.3s ease;
+        }
+
+        .demo-card:hover .play-btn svg {
+            fill: white;
+        }
+
+        .video-hint {
+            font-size: 12px;
+        }
+
+        .demo-info {
+            padding: 28px;
+        }
+
+        .demo-tag {
+            display: inline-block;
+            padding: 5px 10px;
+            background: var(--accent-subtle);
+            color: var(--accent-light);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .demo-info h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .demo-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== Summary Section ===== */
+        .summary {
+            background: var(--bg-primary);
+            text-align: center;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.08) 0%, rgba(94, 92, 230, 0.06) 50%, rgba(191, 90, 242, 0.04) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 32px;
+            padding: 72px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            left: -200px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(10, 132, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .summary-card h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .summary-card p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            max-width: 620px;
+            margin: 0 auto 36px;
+            position: relative;
+        }
+
+        .summary-features {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .summary-feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .summary-feature svg {
+            width: 18px;
+            height: 18px;
+            stroke: #34c759;
+            fill: none;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            background: var(--bg-secondary);
+            padding: 56px 0;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.4s var(--ease-out-expo);
+        }
+
+        .footer-link:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .footer-link svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .footer-copy {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* ===== Scroll Animations ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s var(--ease-out-expo);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            section {
+                padding: 72px 0;
+            }
+
+            .intro-card,
+            .arch-container,
+            .summary-card {
+                padding: 40px 24px;
+            }
+
+            .arch-flow {
+                flex-direction: column;
+            }
+
+            .arch-arrow {
+                transform: rotate(90deg);
+            }
+
+            .summary-features {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* ===== Smooth Scroll ===== */
+        html {
+            scroll-padding-top: 80px;
+        }
+    </style>
 </head>
 <body>
-  
-<section class="hero hero-bg">
-  <div class="hero-body has-text-centered" style="background-color: rgba(255,255,255,0.63);">
-    <h1 class="title is-1 publication-title" style="margin-bottom:0rem">X-World</h1>
-    <h2 class="title is-3 publication-title">Controllable Ego-Centric Multi-Camera World Models<br>for Scalable End-to-End Driving</h2>
-    <!-- <h1 class="title is-1">X-World:<br>Controllable Multi-Agent World Models<br> for Scalable End-to-End Driving</h1> -->
-    <!-- Controllable Ego-Centric Multi-Camera World Models for Scalable End-to-End Driving -->
-    <p>
-      <strong>XPeng GWM Team</strong>
-    </p>
-    <!-- <p><em>XPeng Motors</em></p> -->
-  
-    <p style="margin-top:1rem;line-height: 3.5;">
-      <a href="" class="button is-dark is-small is-rounded">
-        <span class="icon"><i class="ai ai-arxiv"></i></span><span>Technical Report</span>
-      </a>
-      <a href="" class="button is-dark is-small is-rounded">
-        <span class="icon"><i class="fab fa-github"></i></span><span>GitHub</span>
-      </a>
-      <a href="" class="button is-dark is-small is-rounded">
-        <span class="icon">🤗</span><span>HuggingFace</span>
-      </a>
-<!--       <a href="#" class="button is-dark is-small is-rounded">
-        <span class="icon">🚀</span><span>Dataset (Comming soon)</span>
-      </a> -->
-    </p>
-  </div>
-</section>
-<!-- ABSTRACT -->
-<section class="section">
-  <div class="container is-max-desktop">
-    <h2 class="title is-2 has-text-centered">Abstract</h2>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">X-World</div>
+            <ul class="nav-links">
+                <li><a href="#intro">简介</a></li>
+                <li><a href="#pillars">核心技术</a></li>
+                <li><a href="#architecture">工作原理</a></li>
+                <li><a href="#data">数据</a></li>
+                <li><a href="#demos">演示</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                XPeng GWM 团队
+            </div>
+            <h1>X-World</h1>
+            <p class="subtitle">让汽车学会"预见未来"</p>
+            <p class="tagline">一个会"思考"驾驶场景的 AI 系统，就像给汽车装上了"想象力"，能提前"想出"路况的变化</p>
+            <div class="hero-cta">
+                <a href="#intro" class="btn">
+                    了解更多
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17l9.2-9.2M17 17V7H7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+
     
-    <!-- Abstract Text -->
-    <div class="content has-text-justified">
-      Scalable and reliable evaluation is increasingly critical in the end-to-end era of autonomous driving, where Vision-Language-Action (VLA) policies directly map raw sensor streams to driving actions. Yet, current evaluation pipelines still rely heavily on real-world road testing, which is costly, biased toward limited scenario coverage, and difficult to reproduce. These challenges motivate a real-world simulator that can generate realistic future observations under proposed actions, while remaining controllable and stable over long horizons. 
-      <strong>We present X-World, an action-conditioned multi-camera generative world model that simulates future observations directly in video space.</strong> 
-      Given synchronized multi-view camera history and a future action sequence, X-World generates future multi-camera video streams that follow the commanded actions. 
-      To ensure reproducible and editable scene rollouts, X-World supports optional controls over dynamic traffic agents and static road elements, and retains a text-prompt interface for appearance-level control (e.g., weather and time of day). 
-      Beyond world simulation, X-World enables video style transfer by conditioning on appearance prompts while preserving the underlying action and scene dynamics. 
-      At the core of X-World a multi-view latent video generator designed to explicitly encourage cross-view geometric consistency and temporal coherence under diverse control signals. 
-      Experiments show that X-World achieves high-quality multi-view video generation:
-      </div>
+    <!-- Intro -->
+    <section class="intro" id="intro">
+        <div class="container">
+            <div class="section-header reveal" >
+                <span class="section-label">Introduction</span>
+                <h2>这是什么</h2>
+                <p>想象一下：你在玩游戏时，游戏能根据你的操作提前生成接下来的画面。X-World 就是这样——它能根据现在的路况和驾驶操作，提前"想出"几秒钟后路况会变成什么样。
+它让汽车在虚拟世界里学习开车，不用真的上路冒险，极大降低了学习和测试的成本与风险。</p>
+        <div style="height: 200px;"></div>
 
-      <!-- Key Findings Highlight -->
-      <div style="display: flex; gap: 16px; margin-top: 1.2rem; flex-wrap: wrap; justify-content: center;">
-        <div style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 14px; padding: 24px 20px; color: #fff; text-align: center; box-shadow: 0 8px 24px rgba(102,126,234,0.3); transition: transform 0.2s;">
-          <div style="font-size: 2rem; margin-bottom: 8px;">👁️</div>
-          <div style="font-size: 0.95rem; font-weight: 700; letter-spacing: 0.3px;">Strong View Consistency</div>
-          <div style="font-size: 0.8rem; opacity: 0.85; margin-top: 6px;">Geometric consistency across all cameras</div>
+            </div>
+           
         </div>
-        <div style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 14px; padding: 24px 20px; color: #fff; text-align: center; box-shadow: 0 8px 24px rgba(245,87,108,0.3); transition: transform 0.2s;">
-          <div style="font-size: 2rem; margin-bottom: 8px;">🎞️</div>
-          <div style="font-size: 0.95rem; font-weight: 700; letter-spacing: 0.3px;">Stable Temporal Dynamics</div>
-          <div style="font-size: 0.8rem; opacity: 0.85; margin-top: 6px;">Coherent generation over long rollouts</div>
+    </section>
+
+    <!-- Core Pillars -->
+    <section class="pillars" id="pillars">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-label">Core Technology</span>
+                <h2>三大核心技术</h2>
+                <p>让"想象力"变成真正的技术</p>
+            </div>
+            <div class="pillars-grid">
+                <div class="pillar-card reveal">
+                    <div class="pillar-icon">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M4.22 19.78l1.42-1.42m12.72-12.72l1.42-1.42"/></svg>
+                    </div>
+                    <span class="pillar-number">01</span>
+                    <h3>7 个摄像头"一起看"</h3>
+                    <p>就像人的眼睛能看立体画面，X-World 同时用 7 个摄像头获取 360° 全景，而且所有画面保持"和谐"，不会错位或模糊。</p>
+                </div>
+                <div class="pillar-card reveal">
+                    <div class="pillar-icon">
+                        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </div>
+                    <span class="pillar-number">02</span>
+                    <h3>连续画面"不卡顿"</h3>
+                    <p>普通 AI 看几秒就"犯糊涂"，画面会模糊消失。X-World 能连续生成几十秒的画面，每一帧都完美衔接。</p>
+                </div>
+                <div class="pillar-card reveal">
+                    <div class="pillar-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <span class="pillar-number">03</span>
+                    <h3>让你"指挥"它</h3>
+                    <p>想让车左转就左转，想加速就加速。还能随意改变天气、时间、路况来测试各种场景。</p>
+                </div>
+            </div>
         </div>
-        <div style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 14px; padding: 24px 20px; color: #fff; text-align: center; box-shadow: 0 8px 24px rgba(79,172,254,0.3); transition: transform 0.2s;">
-          <div style="font-size: 2rem; margin-bottom: 8px;">🎯</div>
-          <div style="font-size: 0.95rem; font-weight: 700; letter-spacing: 0.3px;">High Controllability</div>
-          <div style="font-size: 0.8rem; opacity: 0.85; margin-top: 6px;">Strict action following & faithful scene control</div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="architecture" id="architecture">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-label">TECHNICAL STRENGTH</span>
+                <h2>它是怎么工作的</h2>
+                <p>X-World是一个以动作为条件的多相机生成式世界模型，给定同步多视角相机历史和未来动作序列，预测执行指定动作后的未来相机观测</p>
+            </div>
+            <div >
+                <img src="img/htwork.png" alt="Architecture Diagram" style="width: 100%;">
+                </div>
+             
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="content has-text-justified" style="margin-top: 1.2rem;">
-      These properties make X-World a practical foundation for scalable and reproducible evaluation. Its streaming, interactive rollout interface further makes X-World well-suited for online reinforcement learning of end-to-end autonomous driving systems through closed-loop simulation.
-      </div>
-
-    <!-- Video (placed directly below abstract text) -->
-    <!-- <div style="margin-top: 2rem;">
-      <video class="has-ratio" controls style="width: 100%; aspect-ratio: 16 / 9;">
-        <source src="static/videos/matrix-game2.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div> -->
-  </div>
-</section>
-
-<!-- Model Overview -->
-<section class="section">
-    <div class="container is-max-desktop">
-
-    <h2 class="title is-2 has-text-centered">Model Overview</h2>
-    <div class="box mt-6"> 
-      <p><strong> We propose X-World, a generative world model formulated as an action-conditioned multi-camera video generation model. Given a short history of synchronized multi-view camera streams, the model predicts the future camera observations that would result from executing a specified future action sequence.</strong></p>
-      <div class="table-container">
-        <img src="static/imgs/xworld_v1.jpg" alt="X-World" style="width: 100%; height: auto;">
-      </div> 
-    </div>
-  </div>
-      
-</section>
-
-
-<!-- Data Preparation -->
-<section class="section">
-  <div class="container is-max-desktop">
-    <h2 class="title is-2 has-text-centered">Data Preparation</h2>
-
-    <div class="box mt-6">
-      <p>
-        <strong>
-          The video data is recorded at a rate of 12 frames per second (FPS). Each frame provides a comprehensive 360-degree surround-view through seven distinct, calibrated camera perspectives.
-        </strong>
-      </p>
-
-      <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
-        <img src="static/imgs/camera.png" alt="X-World" style="width: 50%; height: auto;">
-        <img src="static/imgs/pie.jpg" alt="X-World" style="width: 50%; height: auto;">
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- Key Features -->
-<!-- <section class="section">
-  <div class="container is-max-desktop">
-    <h2 class="title is-2 has-text-centered">Key Features</h2>
-
-    <div class="columns is-multiline mt-4">
-      <div class="column is-4">
-        <div class="box has-text-centered" style="height:100%;">
-          <span style="font-size:2.5rem;">🎥</span>
-          <h3 class="title is-5 mt-3">Multi-Camera Generation</h3>
-          <p>Generates synchronized multi-view camera streams that maintain geometric consistency across views.</p>
+    <!-- Data -->
+    <section class="data" id="data">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-label">TECHNICAL STRENGTH</span>
+                <h2>眼见为实的领先一代</h2>
+                <p>X-World是一个以动作为条件的多相机生成式世界模型，给定同步多视角相机历史和未来动作序列，预测执行指定动作后的未来相机观测</p>
+            </div>
+            <div >
+            
+               
+                   <img src="img/date_img.png"  style="width: 100%; align-items: center; padding-left: 10%; padding-right: 10%; padding-bottom: 5%;">
+             
+            </div>
         </div>
-      </div>
-      <div class="column is-4">
-        <div class="box has-text-centered" style="height:100%;">
-          <span style="font-size:2.5rem;">🎮</span>
-          <h3 class="title is-5 mt-3">Action Conditioned</h3>
-          <p>Future observations are generated conditioned on a specified action sequence, enabling controllable simulation.</p>
-        </div>
-      </div>
-      <div class="column is-4">
-        <div class="box has-text-centered" style="height:100%;">
-          <span style="font-size:2.5rem;">🚗</span>
-          <h3 class="title is-5 mt-3">Multi-Agent Control</h3>
-          <p>Supports optional controls over dynamic traffic agents and static road elements for editable scene rollouts.</p>
-        </div>
-      </div>
-      <div class="column is-4">
-        <div class="box has-text-centered" style="height:100%;">
-          <span style="font-size:2.5rem;">🌦️</span>
-          <h3 class="title is-5 mt-3">Style Transfer</h3>
-          <p>Text-prompt interface for appearance-level control, e.g., weather and time-of-day changes, while preserving dynamics.</p>
-        </div>
-      </div>
-      <div class="column is-4">
-        <div class="box has-text-centered" style="height:100%;">
-          <span style="font-size:2.5rem;">⏱️</span>
-          <h3 class="title is-5 mt-3">Long-Horizon Stability</h3>
-          <p>Stable temporal dynamics over long rollouts with strong temporal coherence under diverse control signals.</p>
-        </div>
-      </div>
-      <div class="column is-4">
-        <div class="box has-text-centered" style="height:100%;">
-          <span style="font-size:2.5rem;">🔄</span>
-          <h3 class="title is-5 mt-3">Streaming & Interactive</h3>
-          <p>Streaming, interactive rollout interface well-suited for online reinforcement learning through closed-loop simulation.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section> -->
-  <!-- VIDEO DEMOS -->
-<section class="section">
-  <div class="container is-max-desktop has-text-centered">
-    <h2 class="title is-2">Action-Conditioned Multi-Camera Generation</h2>
-    <p class="subtitle has-text-justified">X-World generates future <strong>multi-camera video streams</strong> that faithfully follow the <strong>commanded actions</strong>, while maintaining strong <strong>cross-view geometric consistency</strong>.</p>
-    <div class="video-grid" id="videoContainer_action" style="grid-template-columns: repeat(3, 1fr);"></div>
-  </div>
-</section>
-<section class="section">
-  <div class="container is-max-desktop has-text-centered">
-    <h2 class="title is-2">Multi-Agent Controllable Generation</h2>
-    <p class="subtitle has-text-justified">X-World supports optional controls over <strong>dynamic traffic agents</strong> and <strong>static road elements</strong>, enabling <strong>reproducible and editable scene rollouts</strong>.</p>
-    <div class="video-grid" id="videoContainer_agent" style="grid-template-columns: repeat(2, 1fr);"></div>
-  </div>
-</section>
-<section class="section">
-  <div class="container is-max-desktop has-text-centered">
-    <h2 class="title is-2">Long-Horizon Rollout</h2>
-    <p class="subtitle has-text-justified">X-World achieves <strong>stable temporal dynamics</strong> over long rollouts, demonstrating <strong>strong temporal coherence</strong> in extended simulation.</p>
-    <div class="video-grid" id="videoContainer_long" style="grid-template-columns: repeat(2, 1fr);"></div>
-  </div>
-</section>
-<section class="section">
-  <div class="container is-max-desktop has-text-centered">
-    <h2 class="title is-2">World Style Transfer</h2>
-    <p class="subtitle has-text-justified">X-World enables <strong>world style transfer</strong> by conditioning on appearance prompts while preserving the underlying action and scene dynamics. Supported controls include <strong>weather conditions</strong> (e.g., rain, snow), <strong>time of day</strong> (e.g., day/night), and <strong>geographic region</strong> (e.g., China, Germany), enabling <strong>scalable scenario diversity</strong> without re-collecting real data.</p>
-    <div class="video-grid" id="videoContainer_style"></div>
-  </div>
-</section>
-<!-- ACK / CITATION -->
-<section class="section">
-<div class="container is-max-desktop">
-      <h2 class="title is-3">Citation</h2>
-<pre>
-<code>
-  
-</code>
-</pre>
-</div>
-</section>
+    </section>
 
-  <footer class="footer">
-    <div class="container"><div class="content has-text-centered">Template adapted from <a href="https://nerfies.github.io/">NERFies</a>, CC BY‑SA 4.0.</div></div>
-  </footer>
+    <!-- Demos -->
+    <section class="demos" id="demos">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-label">Features</span>
+                <h2>能做什么</h2>
+                <p>四大核心功能演示</p>
+            </div>
+            <div class="demo-grid">
+                <div class="demo-card reveal">
+                    
+                       <video 
+            controls 
+            width="100%" 
+            preload="auto"
+        >
+            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
+            <source src="video/002.mp4" type="video/mp4">
+        
+            <!-- 浏览器不支持video标签时显示的提示 -->
+            你的浏览器不支持HTML5视频播放，请升级浏览器！
+        </video>
+                   
+                    <div class="demo-info">
+                        <span class="demo-tag">功能一</span>
+                        <h3>操作控制演示</h3>
+                        <p>输入"左转"指令，生成的画面就会向左转；输入"加速"，画面就会向前飞驰。AI 完美理解你的意图并生成相应画面。</p>
+                    </div>
+                </div>
 
-  <!-- JS: Dynamic Video Loader for X-World -->
-  <script>
-  // 动态创建视频元素
-  function createVideoElement(path) {
-      const video = document.createElement('video');
-      video.controls = true;
-      video.autoplay = true;
-      video.loop = true;
-      video.muted = true;           // 必须静音才能自动播放
-      video.playsInline = true;     // iOS 内联播放
-      video.preload = 'auto';
-      
-      const source = document.createElement('source');
-      source.src = path;
-      source.type = 'video/mp4';
-      video.appendChild(source);
-      
-      video.addEventListener('error', function(e) {
-          console.error('Video loading failed:', path);
-          const errorDiv = document.createElement('div');
-          errorDiv.style.cssText = `
-              background: #f0f4f8;
-              border: 2px dashed #b0bec5;
-              border-radius: 8px;
-              padding: 30px;
-              text-align: center;
-              color: #546e7a;
-              min-height: 200px;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-          `;
-          errorDiv.innerHTML = `
-              <i class="fas fa-video" style="font-size: 28px; margin-bottom: 10px; opacity: 0.5;"></i><br>
-              <strong>Video Coming Soon</strong><br>
-              <small style="opacity:0.7;">${path}</small>
-          `;
-          video.parentNode.replaceChild(errorDiv, video);
-      });
-      
-      return video;
-  }
-  
-  // X-World 视频路径配置
-  // 将视频文件放入对应目录后，此处路径会自动生效
-  const video_action = [
-      'static/videos/action/sample_5690211_120_c-0126a92e-fe7e-34c7-b328-242b9fd56c6f_anchor0_pred_rank0.mp4',
-      'static/videos/action/sample_5732101_230_c-1a614133-ded4-367f-b051-3876bee28e18_anchor0_pred_rank0.mp4',
-      'static/videos/action/sample_5738512_225_c-1d776d80-ccaa-3917-8c58-62fd9bdd881a_anchor0_pred_rank0.mp4'
-  ];
-  const video_agent = [
-      'static/videos/lane/sample_8931002_4_pred_rank0.mp4',
-      'static/videos/vru_cutin/sample_5795613_75_c-21417971-7912-3903-bb6e-56e4c92911b7_anchor0_pred_rank0.mp4'
-  ];
-  const video_style = [
-      { path: 'static/videos/style/baseline_sample_8_1_pred.mp4', label: 'Baseline' },
-      { path: 'static/videos/style/rain_sample_8_1_pred.mp4', label: '🌧️ Rain' },
-      { path: 'static/videos/style/snow_sample_8_1_pred.mp4', label: '❄️ Snow' },
-      { path: 'static/videos/style/daynight_sample_8_1_pred.mp4', label: '🌙 Day → Night' },
-      { path: 'static/videos/style/china_sample_8_1_pred.mp4', label: '🇩🇪 Germany → 🇨🇳 China' },
-      { path: 'static/videos/style/weather_sample_8_1_pred.mp4', label: '🌥️ Weather' }
-  ];
-  const video_long = [
-      'static/videos/long/rank_8_8466826-7-0_ema_causal_83.mp4',
-      // 'static/videos/long/rank_8_8466826-7-0_ema_causal_83 copy.mp4',
-      // 'static/videos/long/rank_8_8466826-7-0_ema_causal_83 copy_text_edited.mp4',
-      'static/videos/long/rank_12_6777324-17-0_ema_causal_83.mp4'
-  ];
-  
-  function initVideoWall() {
-      const sections = [
-          { containerId: 'videoContainer_action', videos: video_action, name: 'Action-Conditioned' },
-          { containerId: 'videoContainer_agent', videos: video_agent, name: 'Multi-Agent Control' },
-          { containerId: 'videoContainer_style', videos: video_style, name: 'Style Transfer' },
-          { containerId: 'videoContainer_long', videos: video_long, name: 'Long-Horizon Rollout' }
-      ];
-      
-      sections.forEach(section => {
-          const container = document.getElementById(section.containerId);
-          if (!container) return;
-          if (!section.videos || section.videos.length === 0) return;
-          
-          container.innerHTML = '';
-          section.videos.forEach((item) => {
-              try {
-                  const path = (typeof item === 'string') ? item : item.path;
-                  const label = (typeof item === 'string') ? null : item.label;
-                  const videoElement = createVideoElement(path);
-                  
-                  if (label) {
-                      const wrapper = document.createElement('div');
-                      wrapper.className = 'video-item';
-                      wrapper.appendChild(videoElement);
-                      const labelEl = document.createElement('div');
-                      labelEl.className = 'video-label';
-                      labelEl.textContent = label;
-                      wrapper.appendChild(labelEl);
-                      container.appendChild(wrapper);
-                  } else {
-                      container.appendChild(videoElement);
-                  }
-              } catch (error) {
-                  console.error(`Failed to create video element for ${item}:`, error);
-              }
-          });
-      });
-  }
+                <div class="demo-card reveal">
+                     <video 
+            controls 
+            width="100%" 
+            preload="auto"
+        >
+            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
+            <source src="video/003.mp4" type="video/mp4">
+        
+            <!-- 浏览器不支持video标签时显示的提示 -->
+            你的浏览器不支持HTML5视频播放，请升级浏览器！
+        </video>
+                    <div class="demo-info">
+                        <span class="demo-tag">功能二</span>
+                        <h3>多车场景控制</h3>
+                        <p>可以控制画面中其他车辆的行为：让它们加速、减速、变道，就像你在指挥一个真实的交通场景。</p>
+                    </div>
+                </div>
 
-  window.onload = function() {
-      initVideoWall();
-  };
-  </script>
+                <div class="demo-card reveal">
+                     <video 
+            controls 
+            width="100%" 
+            preload="auto"
+        >
+            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
+            <source src="video/004.mp4" type="video/mp4">
+        
+            <!-- 浏览器不支持video标签时显示的提示 -->
+            你的浏览器不支持HTML5视频播放，请升级浏览器！
+        </video>
+                    <div class="demo-info">
+                        <span class="demo-tag">功能三</span>
+                        <h3>长距离预测</h3>
+                        <p>连续生成几十秒的画面都不会"崩溃"，画面始终保持稳定和连贯，就像在看一部真实的行车记录仪。</p>
+                    </div>
+                </div>
+
+                <div class="demo-card reveal">
+                     <video 
+            controls 
+            width="100%" 
+            preload="auto"
+        >
+            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
+            <source src="video/001.mp4" type="video/mp4">
+        
+            <!-- 浏览器不支持video标签时显示的提示 -->
+            你的浏览器不支持HTML5视频播放，请升级浏览器！
+        </video>
+                    <div class="demo-info">
+                        <span class="demo-tag">功能四</span>
+                        <h3>风格变换</h3>
+                        <p>一句话就能改变天气和时间：想要"雨天"？想要"黑夜"？甚至是"德国的街道"？一句话就能生成。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="summary" id="summary">
+        <div class="container">
+            <div class="summary-card reveal">
+                <h2>为什么这么重要？</h2>
+                <p>X-World 不仅仅是一个视频生成器，它是一个真正的"虚拟驾驶教练"。它让汽车可以在安全的虚拟环境中学习各种驾驶场景，从容应对各种天气、时间、路况，大大加速了自动驾驶技术的发展。</p>
+                <div class="summary-features">
+                    <div class="summary-feature">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        安全可控
+                    </div>
+                    <div class="summary-feature">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        成本更低
+                    </div>
+                    <div class="summary-feature">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        场景无限
+                    </div>
+                    <div class="summary-feature">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        训练更快
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="#" class="footer-link">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 9h-2v6h2v-6zm0-2h-2V7h2v2z"/></svg>
+                    技术报告
+                </a>
+                <a href="#" class="footer-link">
+                    <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub
+                </a>
+                <a href="#" class="footer-link">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    Hugging Face
+                </a>
+            </div>
+            <p class="footer-copy">X-World 由 XPeng GWM 团队开发 © 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll Reveal Animation
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -60px 0px'
+        });
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // Video Placeholder Click Handler
+        document.querySelectorAll('.demo-video').forEach(video => {
+            video.addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const url = URL.createObjectURL(file);
+                        const videoEl = document.createElement('video');
+                        videoEl.src = url;
+                        videoEl.controls = true;
+                        videoEl.autoplay = true;
+                        videoEl.style.width = '100%';
+                        videoEl.style.height = '100%';
+                        videoEl.style.objectFit = 'cover';
+                        
+                        this.innerHTML = '';
+                        this.appendChild(videoEl);
+                    }
+                });
+                
+                input.click();
+            });
+        });
+
+        // Nav Background on Scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 40) {
+                nav.style.background = 'rgba(0, 0, 0, 0.85)';
+            } else {
+                nav.style.background = 'rgba(0, 0, 0, 0.7)';
+            }
+        });
+
+        // Smooth Scroll for Nav Links
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
