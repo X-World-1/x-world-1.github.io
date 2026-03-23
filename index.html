@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>X-World - 可控制的以自我为中心的多摄像头世界模型</title>
+    <link rel="icon" type="image/svg+xml" href="img/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -92,14 +93,15 @@
         }
 
         .logo {
-            font-family: var(--font-en);
-            font-size: 20px;
-            font-weight: 600;
-            background: linear-gradient(135deg, #fff 0%, #a1a1a6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            display: block;
+            filter: invert(1);
         }
 
         .nav-links {
@@ -959,7 +961,9 @@ display: grid;
     <!-- Navigation -->
     <nav>
         <div class="container">
-            <div class="logo">X-World</div>
+            <a href="#" class="logo">
+                <img src="img/xpeng_primary_logo-black-OGP6DCC3.svg" alt="Logo">
+            </a>
             <ul class="nav-links">
                 <li><a href="#intro">简介</a></li>
                 <li><a href="#pillars">核心技术</a></li>
