@@ -791,6 +791,79 @@ display: grid;
             line-height: 1.6;
         }
 
+        /* ===== Custom Video Player ===== */
+        .video-wrapper {
+            position: relative;
+            overflow: hidden;
+            background: #000;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .video-wrapper video {
+            display: block;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .video-ctrl-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px 18px 14px;
+            background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .video-wrapper:hover .video-ctrl-bar,
+        .video-wrapper.is-paused .video-ctrl-bar {
+            opacity: 1;
+        }
+
+        .v-btn {
+            width: 34px;
+            height: 34px;
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .v-btn:hover {
+            background: rgba(255, 255, 255, 0.26);
+            transform: scale(1.1);
+        }
+
+        .v-btn svg {
+            width: 13px;
+            height: 13px;
+            fill: rgba(255, 255, 255, 0.92);
+        }
+
+        .v-btn .v-icon-play {
+            margin-left: 2px;
+        }
+
+        .v-status {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: var(--font-en);
+            letter-spacing: 0.04em;
+        }
+
         /* ===== Summary Section ===== */
         .summary {
             background: var(--bg-primary);
@@ -1092,23 +1165,29 @@ display: grid;
             </div>
             <div class="demo-grid">
                 <div class="demo-card reveal">
-                    
-                       <video 
-            controls 
-            width="100%" 
-            preload="auto"
-            autoplay
-            loop
-            muted
-            playsinline
-        >
-            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
-            <source src="video/002.mp4" type="video/mp4">
-        
-            <!-- 浏览器不支持video标签时显示的提示 -->
-            你的浏览器不支持HTML5视频播放，请升级浏览器！
-        </video>
-                   
+                    <div class="video-wrapper">
+                        <video
+                            width="100%"
+                            preload="auto"
+                            autoplay
+                            loop
+                            muted
+                            playsinline
+                            disablepictureinpicture
+                            controlslist="nodownload nofullscreen noremoteplayback"
+                            oncontextmenu="return false;"
+                        >
+                            <source src="video/002.mp4" type="video/mp4">
+                            你的浏览器不支持HTML5视频播放，请升级浏览器！
+                        </video>
+                        <div class="video-ctrl-bar">
+                            <button class="v-btn" aria-label="播放/暂停">
+                                <svg class="v-icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                <svg class="v-icon-play" viewBox="0 0 24 24" style="display:none"><polygon points="5,3 19,12 5,21"/></svg>
+                            </button>
+                            <span class="v-status">暂停</span>
+                        </div>
+                    </div>
                     <div class="demo-info">
                         <span class="demo-tag">功能一</span>
                         <h3>操作控制演示</h3>
@@ -1117,21 +1196,29 @@ display: grid;
                 </div>
 
                 <div class="demo-card reveal">
-                     <video 
-            controls 
-            width="100%" 
-            preload="auto"
-            autoplay
-            loop
-            muted
-            playsinline
-        >
-            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
-            <source src="video/003.mp4" type="video/mp4">
-        
-            <!-- 浏览器不支持video标签时显示的提示 -->
-            你的浏览器不支持HTML5视频播放，请升级浏览器！
-        </video>
+                    <div class="video-wrapper">
+                        <video
+                            width="100%"
+                            preload="auto"
+                            autoplay
+                            loop
+                            muted
+                            playsinline
+                            disablepictureinpicture
+                            controlslist="nodownload nofullscreen noremoteplayback"
+                            oncontextmenu="return false;"
+                        >
+                            <source src="video/003.mp4" type="video/mp4">
+                            你的浏览器不支持HTML5视频播放，请升级浏览器！
+                        </video>
+                        <div class="video-ctrl-bar">
+                            <button class="v-btn" aria-label="播放/暂停">
+                                <svg class="v-icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                <svg class="v-icon-play" viewBox="0 0 24 24" style="display:none"><polygon points="5,3 19,12 5,21"/></svg>
+                            </button>
+                            <span class="v-status">暂停</span>
+                        </div>
+                    </div>
                     <div class="demo-info">
                         <span class="demo-tag">功能二</span>
                         <h3>多车场景控制</h3>
@@ -1140,21 +1227,29 @@ display: grid;
                 </div>
 
                 <div class="demo-card reveal">
-                     <video 
-            controls 
-            width="100%" 
-            preload="auto"
-            autoplay
-            loop
-            muted
-            playsinline
-        >
-            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
-            <source src="video/004.mp4" type="video/mp4">
-        
-            <!-- 浏览器不支持video标签时显示的提示 -->
-            你的浏览器不支持HTML5视频播放，请升级浏览器！
-        </video>
+                    <div class="video-wrapper">
+                        <video
+                            width="100%"
+                            preload="auto"
+                            autoplay
+                            loop
+                            muted
+                            playsinline
+                            disablepictureinpicture
+                            controlslist="nodownload nofullscreen noremoteplayback"
+                            oncontextmenu="return false;"
+                        >
+                            <source src="video/004.mp4" type="video/mp4">
+                            你的浏览器不支持HTML5视频播放，请升级浏览器！
+                        </video>
+                        <div class="video-ctrl-bar">
+                            <button class="v-btn" aria-label="播放/暂停">
+                                <svg class="v-icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                <svg class="v-icon-play" viewBox="0 0 24 24" style="display:none"><polygon points="5,3 19,12 5,21"/></svg>
+                            </button>
+                            <span class="v-status">暂停</span>
+                        </div>
+                    </div>
                     <div class="demo-info">
                         <span class="demo-tag">功能三</span>
                         <h3>长距离预测</h3>
@@ -1163,21 +1258,29 @@ display: grid;
                 </div>
 
                 <div class="demo-card reveal">
-                     <video 
-            controls 
-            width="100%" 
-            preload="auto"
-            autoplay
-            loop
-            muted
-            playsinline
-        >
-            <!-- 源视频文件，MP4格式兼容性最好，可多格式兜底 -->
-            <source src="video/001.mp4" type="video/mp4">
-        
-            <!-- 浏览器不支持video标签时显示的提示 -->
-            你的浏览器不支持HTML5视频播放，请升级浏览器！
-        </video>
+                    <div class="video-wrapper">
+                        <video
+                            width="100%"
+                            preload="auto"
+                            autoplay
+                            loop
+                            muted
+                            playsinline
+                            disablepictureinpicture
+                            controlslist="nodownload nofullscreen noremoteplayback"
+                            oncontextmenu="return false;"
+                        >
+                            <source src="video/001.mp4" type="video/mp4">
+                            你的浏览器不支持HTML5视频播放，请升级浏览器！
+                        </video>
+                        <div class="video-ctrl-bar">
+                            <button class="v-btn" aria-label="播放/暂停">
+                                <svg class="v-icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                <svg class="v-icon-play" viewBox="0 0 24 24" style="display:none"><polygon points="5,3 19,12 5,21"/></svg>
+                            </button>
+                            <span class="v-status">暂停</span>
+                        </div>
+                    </div>
                     <div class="demo-info">
                         <span class="demo-tag">功能四</span>
                         <h3>风格变换</h3>
@@ -1246,32 +1349,33 @@ display: grid;
             revealObserver.observe(el);
         });
 
-        // Video Placeholder Click Handler
-        document.querySelectorAll('.demo-video').forEach(video => {
-            video.addEventListener('click', function() {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'video/*';
-                
-                input.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const url = URL.createObjectURL(file);
-                        const videoEl = document.createElement('video');
-                        videoEl.src = url;
-                        videoEl.controls = true;
-                        videoEl.autoplay = true;
-                        videoEl.style.width = '100%';
-                        videoEl.style.height = '100%';
-                        videoEl.style.objectFit = 'cover';
-                        
-                        this.innerHTML = '';
-                        this.appendChild(videoEl);
-                    }
-                });
-                
-                input.click();
+        // Custom Video Player — play/pause only, no fullscreen, no download
+        document.querySelectorAll('.video-wrapper').forEach(wrapper => {
+            const video  = wrapper.querySelector('video');
+            const pauseIcon = wrapper.querySelector('.v-icon-pause');
+            const playIcon  = wrapper.querySelector('.v-icon-play');
+            const status    = wrapper.querySelector('.v-status');
+
+            function syncUI() {
+                if (video.paused) {
+                    wrapper.classList.add('is-paused');
+                    if (pauseIcon) pauseIcon.style.display = 'none';
+                    if (playIcon)  playIcon.style.display  = '';
+                    if (status)    status.textContent = '继续播放';
+                } else {
+                    wrapper.classList.remove('is-paused');
+                    if (pauseIcon) pauseIcon.style.display = '';
+                    if (playIcon)  playIcon.style.display  = 'none';
+                    if (status)    status.textContent = '暂停';
+                }
+            }
+
+            wrapper.addEventListener('click', () => {
+                video.paused ? video.play() : video.pause();
             });
+
+            video.addEventListener('play',  syncUI);
+            video.addEventListener('pause', syncUI);
         });
 
         // Nav Background on Scroll
