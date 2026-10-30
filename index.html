@@ -317,6 +317,24 @@ html[lang="zh-CN"] .sum-card h2{letter-spacing:0}
 .feat .ck svg{width:13px;height:13px}
 .feat b{font-family:var(--font-display);font-size:16px;font-weight:500;letter-spacing:-.01em}
 
+/* citation */
+section.cite{padding:8px 0 72px}
+.bib{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 24px 48px -40px rgba(11,18,32,.35)}
+.bib-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 10px 9px 18px;border-bottom:1px solid var(--line);background:var(--bg-soft)}
+.bib-bar .k-lab{display:flex;align-items:center;gap:8px}
+.bib-bar .k-lab i{width:8px;height:8px;border-radius:2px;background:var(--grad)}
+.bib-copy{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:8px;background:#fff;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-2);transition:color .2s,border-color .2s,background .2s}
+html[lang="zh-CN"] .bib-copy{font-family:var(--font-body);font-size:12.5px}
+.bib-copy svg{width:14px;height:14px}
+.bib-copy:hover{color:var(--blue);border-color:var(--blue)}
+.bib-copy.ok{color:#fff;background:var(--blue);border-color:var(--blue)}
+.bib-code{padding:18px 22px 20px;font-family:var(--font-mono);font-size:13px;line-height:1.75;color:var(--ink)}
+.bib-code .ln{white-space:pre-wrap;word-break:break-word;padding-left:4ch;text-indent:-4ch}
+.bib-code .bt{color:#7c5cff}
+.bib-code .bk{color:var(--blue)}
+.bib-code .bf{color:#0096d6}
+.bib-code .p{color:var(--ink-3)}
+
 /* footer */
 footer{padding:72px 0 40px;border-top:1px solid var(--line)}
 .foot-top{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
@@ -663,6 +681,31 @@ footer{padding:72px 0 40px;border-top:1px solid var(--line)}
     </div>
   </div>
 </section>
+
+<!-- ============ CITATION ============ -->
+<section id="cite" class="cmp cite">
+  <div class="wrap cmp-grid">
+    <div class="cmp-head">
+      <div class="sec-meta rv"><span class="lbl" data-i18n="cite.label">Citation</span><span class="rule"></span><span>BibTeX</span></div>
+      <h2 class="rv d1" data-i18n="cite.title">Cite X-World</h2>
+      <p class="rv d2" data-i18n="cite.desc">If X-World helps your research, please cite our technical report.</p>
+    </div>
+    <div class="bib rv">
+      <div class="bib-bar">
+        <span class="k-lab"><i></i>BibTeX</span>
+        <button class="bib-copy" id="bibCopy" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg><span id="bibCopyLbl" data-i18n="bib.copy">Copy</span></button>
+      </div>
+      <div class="bib-code" id="bibCode">
+        <div class="ln"><span class="bt">@article</span><span class="p">{</span><span class="bk">zheng2026x</span><span class="p">,</span></div>
+        <div class="ln">  <span class="bf">title</span><span class="p">={</span>X-World: Controllable Ego-Centric Multi-Camera World Models for Scalable End-to-End Driving<span class="p">},</span></div>
+        <div class="ln">  <span class="bf">author</span><span class="p">={</span>Zheng, Chaoda and Li, Sean and Deng, Jinhao and Wang, Zhennan and Chen, Shijia and Xiao, Liqiang and Chi, Ziheng and Lin, Hongbin and Chen, Kangjie and Wang, Boyang and others<span class="p">},</span></div>
+        <div class="ln">  <span class="bf">journal</span><span class="p">={</span>arXiv preprint arXiv:2603.19979<span class="p">},</span></div>
+        <div class="ln">  <span class="bf">year</span><span class="p">={</span>2026<span class="p">}</span></div>
+        <div class="ln"><span class="p">}</span></div>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 
 <!-- ============ FOOTER ============ -->
@@ -720,6 +763,7 @@ footer{padding:72px 0 40px;border-top:1px solid var(--line)}
     'summary.title':'为什么这么重要？',
     'summary.desc':'不只是视频生成器，更是一位“虚拟驾驶教练”：让汽车在安全的虚拟环境中，学会应对各种天气、时段与路况。',
     'f1':'安全可控','f2':'成本更低','f3':'场景无限','f4':'训练更快',
+    'cite.label':'引用','cite.title':'引用 X-World','cite.desc':'如果 X-World 对你的研究有帮助，欢迎引用我们的技术报告。','bib.copy':'复制',
     'footer.report':'技术报告','footer.copy':'X-World 由 XPeng GWM 团队开发 © 2026'
   };
   var STR = {
@@ -903,6 +947,28 @@ footer{padding:72px 0 40px;border-top:1px solid var(--line)}
     mk('circle', {cx:6 + tcol * 11, cy:6 + tr * 10, r:inCol && inRow ? 3.4 : 2.2,
       fill:inCol && inRow ? '#fff' : inCol ? '#7fd8ff' : inRow ? 'rgba(127,216,255,.6)' : 'rgba(255,255,255,.22)'}, tok);
   }
+
+  /* ---------- citation: copy BibTeX ---------- */
+  var bibCopy = document.getElementById('bibCopy'), bibLbl = document.getElementById('bibCopyLbl'), bibTimer = null;
+  function bibText(){
+    return [].map.call(document.querySelectorAll('#bibCode .ln'), function(l){ return l.textContent; }).join('\n');
+  }
+  function copyFallback(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    ta.remove();
+  }
+  bibCopy.addEventListener('click', function(){
+    var text = bibText();
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function(){ copyFallback(text); });
+    else copyFallback(text);
+    bibCopy.classList.add('ok');
+    bibLbl.textContent = lang === 'zh' ? '已复制' : 'Copied';
+    clearTimeout(bibTimer);
+    bibTimer = setTimeout(function(){ bibCopy.classList.remove('ok'); bibLbl.textContent = (lang === 'zh' ? ZH : EN)['bib.copy']; }, 1800);
+  });
 
   setLang(lang);
 })();
