@@ -1,977 +1,154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>X-World — Controllable Ego-Centric Multi-Camera World Model</title>
-<meta name="description" content="X-World is an action-conditioned multi-camera generative world model from the XPeng GWM Team that simulates future driving observations directly in video space.">
-<meta property="og:title" content="X-World — Controllable Ego-Centric Multi-Camera World Model">
-<meta property="og:description" content="Teaching cars to foresee the future. An action-conditioned multi-camera world model for scalable end-to-end driving.">
-<meta property="og:url" content="https://x-world-1.github.io/">
-<meta property="og:image" content="https://x-world-1.github.io/img/topbg.jpg">
-<meta property="og:type" content="website">
-<meta name="theme-color" content="#ffffff">
-<link rel="icon" href="img/favicon.ico">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>document.documentElement.classList.add('js');</script>
-<style>
-:root{
-  --bg:#ffffff;
-  --bg-soft:#f6f8fc;
-  --ink:#0b1220;
-  --ink-2:#465166;
-  --ink-3:#8790a3;
-  --line:#e7ebf2;
-  --line-2:#d6dde9;
-  --blue:#1a56ff;
-  --blue-2:#3d7bff;
-  --cyan:#00b4ff;
-  --blue-a08:rgba(26,86,255,.08);
-  --blue-a16:rgba(26,86,255,.16);
-  --dark:#060912;
-  --grad:linear-gradient(100deg,#1a56ff 0%,#00b4ff 100%);
-  --font-display:"Space Grotesk","Noto Sans SC",system-ui,sans-serif;
-  --font-body:"Inter","Noto Sans SC",system-ui,-apple-system,sans-serif;
-  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --radius:18px;
-  --wrap:1240px;
-  --gutter:32px;
-  --nav-h:68px;
-  --ease:cubic-bezier(.2,.7,.2,1);
-}
-*,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-html[lang="zh-CN"] body{--font-display:"Noto Sans SC","Space Grotesk",system-ui,sans-serif;--font-body:"Noto Sans SC","Inter",system-ui,sans-serif}
-img,video,svg{display:block;max-width:100%}
-img{height:auto}
-a{color:inherit;text-decoration:none}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-h1,h2,h3,p{margin:0}
-::selection{background:var(--blue);color:#fff}
-.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter)}
-.mono{font-family:var(--font-mono);letter-spacing:.04em}
-
-/* ---------- shared decor ---------- */
-.grid-bg{position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
-  background-size:56px 56px;background-position:-1px -1px;opacity:.7}
-.hud{position:absolute;width:14px;height:14px;border:0 solid var(--blue);pointer-events:none;z-index:3}
-.hud.tl{top:0;left:0;border-top-width:1.5px;border-left-width:1.5px}
-.hud.tr{top:0;right:0;border-top-width:1.5px;border-right-width:1.5px}
-.hud.bl{bottom:0;left:0;border-bottom-width:1.5px;border-left-width:1.5px}
-.hud.br{bottom:0;right:0;border-bottom-width:1.5px;border-right-width:1.5px}
-.chip{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:999px;background:rgba(255,255,255,.8);font-size:13px;color:var(--ink-2);white-space:nowrap}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 3px var(--blue-a16);flex:none}
-.dot.live{animation:blink 1.6s ease-in-out infinite}
-@keyframes blink{50%{box-shadow:0 0 0 6px rgba(26,86,255,0)}}
-.btn{display:inline-flex;align-items:center;gap:10px;height:50px;padding:0 24px;border-radius:999px;font-weight:500;font-size:15px;transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s,border-color .3s;white-space:nowrap}
-.btn svg{width:16px;height:16px;transition:transform .3s var(--ease)}
-.btn:hover svg{transform:translateX(3px)}
-.btn-primary{background:var(--ink);color:#fff;position:relative;overflow:hidden;isolation:isolate}
-.btn-primary::before{content:"";position:absolute;inset:0;background:var(--grad);opacity:0;transition:opacity .35s;z-index:-1}
-.btn-primary:hover{box-shadow:0 12px 30px -10px rgba(26,86,255,.6);transform:translateY(-1px)}
-.btn-primary:hover::before{opacity:1}
-.btn-ghost{border:1px solid var(--line-2);background:#fff}
-.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
-.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-
-/* reveal */
-.js .rv{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
-.js .rv.in{opacity:1;transform:none}
-.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}.rv.d4{transition-delay:.32s}
-
-/* ---------- nav ---------- */
-.nav{position:fixed;inset:0 0 auto;height:var(--nav-h);z-index:50;background:rgba(255,255,255,.72);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-bottom:1px solid transparent;transition:border-color .3s,background .3s}
-.nav.scrolled{border-bottom-color:var(--line);background:rgba(255,255,255,.86)}
-.nav-in{height:100%;display:flex;align-items:center;gap:28px}
-.brand{display:flex;align-items:center;gap:14px;flex:none}
-.brand img{height:14px;width:auto}
-.brand i{width:1px;height:18px;background:var(--line-2)}
-.brand b{font-family:var(--font-display);font-weight:600;font-size:17px;letter-spacing:-.01em}
-.nav-links{display:flex;gap:4px;margin-left:auto}
-.nav-links a{position:relative;padding:8px 14px;font-size:14px;color:var(--ink-2);border-radius:8px;transition:color .2s}
-.nav-links a::after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:var(--grad);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
-.nav-links a:hover{color:var(--ink)}
-.nav-links a.active{color:var(--ink)}
-.nav-links a.active::after{transform:scaleX(1)}
-.lang{display:flex;padding:3px;border:1px solid var(--line-2);border-radius:999px;flex:none}
-.lang button{height:28px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:500;color:var(--ink-3);transition:background .25s,color .25s}
-.lang button.on{background:var(--ink);color:#fff}
-.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line-2);align-items:center;justify-content:center}
-.menu-btn span,.menu-btn span::before,.menu-btn span::after{display:block;width:16px;height:1.5px;background:var(--ink);position:relative;transition:transform .3s}
-.menu-btn span::before,.menu-btn span::after{content:"";position:absolute;left:0}
-.menu-btn span::before{top:-5px}.menu-btn span::after{top:5px}
-.nav.open .menu-btn span{background:transparent}
-.nav.open .menu-btn span::before{transform:translateY(5px) rotate(45deg)}
-.nav.open .menu-btn span::after{transform:translateY(-5px) rotate(-45deg)}
-.nav-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--grad);transform-origin:left;transform:scaleX(0)}
-
-/* ---------- hero ---------- */
-.hero{position:relative;min-height:100vh;padding:calc(var(--nav-h) + 56px) 0 0;display:flex;flex-direction:column;overflow:hidden}
-.hero>.wrap{width:100%}
-.hero .grid-bg{-webkit-mask-image:radial-gradient(ellipse 80% 70% at 70% 40%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 80% 70% at 70% 40%,#000 20%,transparent 75%)}
-.glow{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
-.glow.g1{width:560px;height:560px;right:-120px;top:-80px;background:rgba(0,180,255,.16)}
-.glow.g2{width:460px;height:460px;right:24%;top:30%;background:rgba(26,86,255,.10)}
-.hero-main{position:relative;flex:1;display:grid;grid-template-columns:1.08fr 1fr;gap:40px;align-items:center}
-.hero-badges{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:28px}
-.hero-badges .mono{font-size:12px;color:var(--ink-3)}
-.hero h1{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(68px,10.5vw,156px);line-height:.9;letter-spacing:-.055em;margin-left:-.04em}
-.hero h1 .x{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.kicker{display:flex;align-items:center;gap:12px;margin:26px 0 18px;font-family:var(--font-mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
-html[lang="zh-CN"] .kicker{letter-spacing:.12em;font-family:var(--font-body);font-size:14px;font-weight:500}
-.kicker::before{content:"";width:28px;height:1.5px;background:var(--blue);flex:none}
-.hero .subtitle{font-family:var(--font-display);font-size:clamp(28px,3.4vw,44px);line-height:1.15;font-weight:500;letter-spacing:-.025em;max-width:16em}
-.hero .tagline{margin-top:18px;max-width:34em;color:var(--ink-2);font-size:17px}
-.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
-.hero h1,.hero-badges,.kicker,.hero .subtitle,.hero .tagline,.hero-cta{animation:rise 1s var(--ease) both}
-.hero-badges{animation-delay:.05s}.hero h1{animation-delay:.12s}.kicker{animation-delay:.22s}.hero .subtitle{animation-delay:.3s}.hero .tagline{animation-delay:.38s}.hero-cta{animation-delay:.46s}
-@keyframes rise{from{opacity:0;transform:translateY(24px)}}
-
-/* radar */
-.radar-wrap{position:relative;aspect-ratio:1;width:100%;max-width:560px;justify-self:end;animation:fade 1.4s .3s var(--ease) both}
-@keyframes fade{from{opacity:0;transform:scale(.96)}}
-.radar{width:100%;height:100%;overflow:visible}
-.radar .ring{fill:none;stroke:var(--line-2);stroke-width:1}
-.radar .ring.dash{stroke-dasharray:2 6}
-.radar .axis{stroke:var(--line);stroke-width:1}
-.radar .tick{stroke:var(--line-2);stroke-width:1}
-.radar .tick.major{stroke:var(--blue);stroke-width:1.4}
-.radar .fov{fill:url(#fovGrad);stroke:rgba(26,86,255,.4);stroke-width:1;animation:fov 4.2s ease-in-out infinite}
-@keyframes fov{0%,100%{opacity:.55}50%{opacity:1}}
-.radar .ray{stroke:rgba(26,86,255,.35);stroke-width:1;stroke-dasharray:3 5}
-.radar .node{fill:#fff;stroke:var(--blue);stroke-width:1.6}
-.radar .packet{fill:var(--blue)}
-.radar .cam-label{font-family:var(--font-mono);font-size:10.5px;fill:var(--ink-3);letter-spacing:.06em}
-.radar .sweep{animation:spin 7s linear infinite;transform-origin:0 0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.radar .car-body{fill:#fff;stroke:var(--ink);stroke-width:1.6}
-.radar .car-glass{fill:var(--ink)}
-.radar .core{fill:none;stroke:var(--blue);stroke-width:1;opacity:.5;animation:core 3s ease-out infinite;transform-origin:0 0}
-@keyframes core{from{transform:scale(.6);opacity:.7}to{transform:scale(2.6);opacity:0}}
-.readout{position:absolute;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--ink-3);line-height:1.6}
-.readout b{display:block;color:var(--ink);font-weight:500;font-size:13px}
-.readout.r1{left:0;top:4%}
-.readout.r2{right:0;bottom:4%;text-align:right}
-
-.specs{position:relative;margin-top:56px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,.7);backdrop-filter:blur(6px)}
-.spec{padding:26px 24px 30px;border-left:1px solid var(--line);position:relative}
-.spec:first-child{border-left:0;padding-left:0}
-.spec .k{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
-.spec .k em{font-style:normal;color:var(--blue)}
-.spec .v{margin-top:8px;font-family:var(--font-display);font-size:18px;font-weight:500;letter-spacing:-.01em}
-
-/* ---------- sections ---------- */
-section{position:relative;padding:136px 0}
-.sec-head{display:grid;grid-template-columns:1.1fr 1fr;gap:24px 64px;align-items:end;margin-bottom:64px}
-.sec-meta{grid-column:1/-1;display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
-.sec-meta .no{color:var(--blue);font-weight:500}
-.sec-meta .lbl{color:var(--ink)}
-html[lang="zh-CN"] .sec-meta .lbl{letter-spacing:.2em}
-.sec-meta .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line-2),transparent)}
-.sec-head h2{font-family:var(--font-display);font-size:clamp(36px,4.6vw,64px);font-weight:600;line-height:1.05;letter-spacing:-.035em}
-html[lang="zh-CN"] .sec-head h2{letter-spacing:-.01em;line-height:1.2}
-.sec-head p{color:var(--ink-2);font-size:17px;max-width:36em}
-
-/* compact sections (intro, pillars, results) */
-section.cmp{padding:56px 0}
-.cmp-body .pills{margin-top:28px}
-.cmp-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,2.15fr);gap:28px 56px;align-items:start}
-.cmp-head h2{margin-top:16px;font-family:var(--font-display);font-size:clamp(26px,2.5vw,32px);font-weight:600;line-height:1.2;letter-spacing:-.025em}
-html[lang="zh-CN"] .cmp-head h2{letter-spacing:0}
-.cmp-head p{margin-top:10px;font-size:15px;color:var(--ink-2)}
-.lead{font-family:var(--font-display);font-size:clamp(19px,1.8vw,23px);font-weight:500;line-height:1.55;letter-spacing:-.01em;color:var(--ink)}
-html[lang="zh-CN"] .lead{font-weight:400;letter-spacing:0}
-
-/* pillars */
-.pills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.pill{display:flex;flex-direction:column;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:transform .4s var(--ease),border-color .3s,box-shadow .3s}
-.pill:hover{transform:translateY(-3px);border-color:var(--line-2);box-shadow:0 20px 40px -28px rgba(26,86,255,.45)}
-.pk{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;color:var(--blue)}
-html[lang="zh-CN"] .pk{font-family:var(--font-body);font-size:12px}
-.pk svg{flex:none;width:20px;height:20px}
-.pill h3{margin-top:12px;font-family:var(--font-display);font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
-.pill p{margin-top:6px;font-size:14px;line-height:1.55;color:var(--ink-2)}
-
-/* method (how it works) */
-.arch{background:var(--bg-soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden}
-.arch .grid-bg{-webkit-mask-image:linear-gradient(180deg,#000,transparent 60%);mask-image:linear-gradient(180deg,#000,transparent 60%);opacity:.55}
-.g-ada{--c:#0096d6}.g-xa{--c:#7c5cff}
-.panel{position:relative;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 60px -48px rgba(11,18,32,.4)}
-section.arch.cmp{padding:48px 0}
-.arch-head{align-items:end;margin-bottom:22px}
-.arch-desc{max-width:44em;font-size:15.5px;color:var(--ink-2)}
-.m-pipe{padding:24px 32px 20px}
-.pipe{display:grid;grid-template-columns:minmax(0,1fr) 72px minmax(0,1.45fr) 72px minmax(0,1fr);align-items:center}
-.pimg{position:relative;grid-row:1;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
-.pimg img{width:100%;height:100%;object-fit:cover}
-.pimg em{position:absolute;left:8px;top:8px;padding:3px 7px;border-radius:5px;font-style:normal;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:#fff;background:rgba(11,18,32,.72)}
-.pimg.out em{background:var(--grad)}
-.pimg.out::after{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 1.5px rgba(0,180,255,.85)}
-.pcap{grid-row:2;align-self:start;margin-top:14px}
-.pcap b{display:block;font-family:var(--font-display);font-size:16px;font-weight:600;letter-spacing:-.01em}
-.pcap span{display:block;margin-top:2px;font-size:13px;color:var(--ink-3)}
-.pipe .in{grid-column:1}.pipe .a1{grid-column:2}.pipe .core,.pipe .conds{grid-column:3}.pipe .a2{grid-column:4}.pipe .out{grid-column:5}
-.arrow{position:relative;grid-row:1;height:2px;margin:0 8px;background:linear-gradient(90deg,var(--line-2) 50%,transparent 0) 0 0/6px 2px}
-.arrow::after{content:"";position:absolute;right:-1px;top:50%;width:7px;height:7px;border-top:1.5px solid var(--ink-3);border-right:1.5px solid var(--ink-3);transform:translateY(-50%) rotate(45deg)}
-.arrow::before{content:"";position:absolute;top:50%;left:0;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--cyan);animation:pkt 1.8s linear infinite}
-@keyframes pkt{0%{left:0;opacity:0}20%,80%{opacity:1}100%{left:calc(100% - 6px);opacity:0}}
-.core{position:relative;grid-row:1;aspect-ratio:2.58;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:22px;padding:20px 24px;border-radius:16px;background:var(--ink);color:#fff;box-shadow:0 24px 48px -22px rgba(26,86,255,.75)}
-.core::before{content:"";position:absolute;inset:-1px;padding:1.5px;border-radius:16px;background:var(--grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.core svg{width:132px;height:72px}
-.core b{display:block;font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-.015em}
-.core .k{display:block;margin-top:4px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:#7fd8ff}
-html[lang="zh-CN"] .core .k{font-family:var(--font-body);font-size:13px}
-.core .d{display:block;margin-top:8px;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.55)}
-.conds{grid-row:2;align-self:start;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:24px}
-.cond{position:relative;padding:10px 8px 9px;border:1px solid var(--line);border-radius:12px;background:#fff;text-align:center}
-.cond::before{content:"";position:absolute;left:50%;bottom:100%;width:2px;height:24px;margin-left:-1px;background:linear-gradient(180deg,var(--c) 55%,transparent 0) 0 0/2px 8px;animation:wireup .6s linear infinite}
-.cond::after{content:"";position:absolute;left:50%;bottom:calc(100% + 18px);border:4.5px solid transparent;border-bottom:7px solid var(--c);transform:translateX(-50%)}
-@keyframes wireup{from{background-position:0 8px}to{background-position:0 0}}
-.cond .ic{display:inline-grid;place-items:center;width:26px;height:26px;margin-bottom:4px;border-radius:8px;color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
-.cond .ic svg{width:17px;height:17px}
-.cond b{display:block;font-size:13.5px;font-weight:600;line-height:1.3}
-.cond .mech{display:inline-block;margin-top:4px;padding:2px 6px;border-radius:5px;font-family:var(--font-mono);font-size:10px;color:var(--c);background:color-mix(in srgb,var(--c) 9%,#fff)}
-.pfoot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:18px;padding-top:14px;border-top:1px dashed var(--line-2)}
-.pfoot>div{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:baseline}
-.pfoot .no{grid-row:span 2;font-family:var(--font-mono);font-size:11.5px;color:var(--blue)}
-.pf-t{font-size:14px;font-weight:600;line-height:1.4}
-.pf-d{font-size:13px;line-height:1.5;color:var(--ink-3)}
-.pf-d b{font-weight:600;color:var(--ink)}
-html[lang="zh-CN"] .key .tag{font-family:var(--font-body);font-size:12.5px}
-
-/* results */
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
-.stat{position:relative;padding:18px 20px 16px;border-left:1px solid var(--line)}
-.stat:first-child{border-left:0}
-.stat.hl{background:linear-gradient(180deg,rgba(26,86,255,.06),rgba(26,86,255,0) 70%)}
-.stat.hl::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--grad)}
-.sv{display:flex;align-items:baseline;gap:6px;font-family:"Space Grotesk",sans-serif;font-weight:600;line-height:1;letter-spacing:-.045em}
-.sv .num{font-size:clamp(40px,3.8vw,50px);font-variant-numeric:tabular-nums}
-.sv .unit{font-size:22px;letter-spacing:-.01em;color:var(--ink-3)}
-html[lang="zh-CN"] .sv .unit{font-family:var(--font-body);font-size:18px;font-weight:500}
-.stat.hl .num,.stat.hl .unit{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.stat b{display:block;margin-top:10px;font-size:14.5px;font-weight:600;line-height:1.35}
-.stat .sd{display:block;margin-top:3px;font-size:13px;color:var(--ink-3)}
-
-/* demos */
-.demo{display:grid;grid-template-columns:1.75fr 1fr;gap:24px;align-items:start}
-.player{position:relative;border-radius:var(--radius);background:var(--dark);overflow:hidden;box-shadow:0 40px 80px -40px rgba(11,18,32,.5)}
-.player-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 18px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.08)}
-.player-bar .left{display:flex;align-items:center;gap:10px;color:#fff}
-.player-bar .left .dot{background:#ff4d4d;box-shadow:0 0 0 3px rgba(255,77,77,.2)}
-.player-bar .right{display:flex;gap:14px}
-.player-bar .right span+span::before{content:"/";margin-right:14px;color:rgba(255,255,255,.25)}
-.screen{position:relative;aspect-ratio:16/9;background:#000}
-.screen video{width:100%;height:100%;object-fit:cover}
-.screen .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .35s}
-.screen.switching .fade{opacity:1}
-.ctrl{display:flex;align-items:center;gap:14px;padding:12px 18px 14px}
-.play{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:#fff;color:var(--ink);transition:transform .2s}
-.play:hover{transform:scale(1.08)}
-.play svg{width:14px;height:14px}
-.play .i-play{display:none}
-.player.paused .play .i-play{display:block}
-.player.paused .play .i-pause{display:none}
-.track{flex:1;height:18px;display:flex;align-items:center;cursor:pointer}
-.track-in{position:relative;width:100%;height:3px;border-radius:3px;background:rgba(255,255,255,.15)}
-.track-in i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:3px;background:linear-gradient(90deg,var(--blue-2),#7fd8ff)}
-.track-in i::after{content:"";position:absolute;right:-5px;top:50%;width:10px;height:10px;border-radius:50%;background:#fff;transform:translateY(-50%);box-shadow:0 0 10px rgba(127,216,255,.8)}
-.time{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums;flex:none}
-.scenes{display:flex;flex-direction:column;gap:10px}
-.scene{position:relative;text-align:left;width:100%;padding:18px 20px 18px 22px;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;transition:border-color .3s,box-shadow .3s,background .3s}
-.scene:hover{border-color:var(--line-2)}
-.scene .bar{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line)}
-.scene .bar i{position:absolute;left:0;right:0;top:0;height:0;background:var(--grad);background:linear-gradient(180deg,var(--blue),var(--cyan))}
-.scene-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.scene .tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
-html[lang="zh-CN"] .scene .tag{font-family:var(--font-body);letter-spacing:.1em}
-.scene .num{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
-.scene h3{margin-top:4px;font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-.015em;transition:color .3s}
-.scene .desc{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s var(--ease)}
-.scene .desc>p{overflow:hidden;font-size:14.5px;color:var(--ink-2)}
-.scene .desc>p::before{content:"";display:block;height:8px}
-.scene.on{border-color:var(--blue-a16);box-shadow:0 18px 40px -24px rgba(26,86,255,.45);background:linear-gradient(180deg,#fff,#f8faff)}
-.scene.on .tag{color:var(--blue)}
-.scene.on .desc{grid-template-rows:1fr}
-
-/* summary */
-.summary{padding:40px 0 64px}
-.sum-card{position:relative;border-radius:24px;overflow:hidden;color:#fff;background:var(--dark);padding:44px 52px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:48px;align-items:center}
-.sum-card .bg{position:absolute;inset:0;background:url(img/topbg.jpg) center/cover no-repeat}
-.sum-card .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,9,18,.55),rgba(6,9,18,0) 70%)}
-.sum-card>*:not(.bg):not(.hud){position:relative}
-.sum-card .hud{border-color:#7fd8ff;margin:14px}
-.sum-card .eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.14em;color:#7fd8ff}
-.sum-card .eyebrow::before{content:"";width:24px;height:1.5px;background:#7fd8ff}
-.sum-card h2{font-family:var(--font-display);font-size:clamp(28px,2.8vw,36px);font-weight:600;letter-spacing:-.03em;line-height:1.15}
-html[lang="zh-CN"] .sum-card h2{letter-spacing:0}
-.sum-card p{margin-top:12px;max-width:34em;font-size:15.5px;color:rgba(255,255,255,.72)}
-.feats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.feat{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .3s,border-color .3s}
-.feat:hover{background:rgba(255,255,255,.09);border-color:rgba(127,216,255,.45)}
-.feat .ck{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(127,216,255,.14);color:#7fd8ff}
-.feat .ck svg{width:13px;height:13px}
-.feat b{font-family:var(--font-display);font-size:16px;font-weight:500;letter-spacing:-.01em}
-
-/* citation */
-section.cite{padding:8px 0 72px}
-.bib{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 24px 48px -40px rgba(11,18,32,.35)}
-.bib-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 10px 9px 18px;border-bottom:1px solid var(--line);background:var(--bg-soft)}
-.bib-bar .k-lab{display:flex;align-items:center;gap:8px}
-.bib-bar .k-lab i{width:8px;height:8px;border-radius:2px;background:var(--grad)}
-.bib-copy{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:8px;background:#fff;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-2);transition:color .2s,border-color .2s,background .2s}
-html[lang="zh-CN"] .bib-copy{font-family:var(--font-body);font-size:12.5px}
-.bib-copy svg{width:14px;height:14px}
-.bib-copy:hover{color:var(--blue);border-color:var(--blue)}
-.bib-copy.ok{color:#fff;background:var(--blue);border-color:var(--blue)}
-.bib-code{padding:18px 22px 20px;font-family:var(--font-mono);font-size:13px;line-height:1.75;color:var(--ink)}
-.bib-code .ln{white-space:pre-wrap;word-break:break-word;padding-left:4ch;text-indent:-4ch}
-.bib-code .bt{color:#7c5cff}
-.bib-code .bk{color:var(--blue)}
-.bib-code .bf{color:#0096d6}
-.bib-code .p{color:var(--ink-3)}
-
-/* footer */
-footer{padding:72px 0 40px;border-top:1px solid var(--line)}
-.foot-top{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
-.foot-brand{display:flex;align-items:center;gap:18px}
-.foot-brand img{height:18px;width:auto}
-.foot-brand i{width:1px;height:26px;background:var(--line-2)}
-.foot-brand b{font-family:"Space Grotesk",sans-serif;font-size:28px;font-weight:600;letter-spacing:-.04em}
-.foot-bot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:48px;padding-top:24px;border-top:1px dashed var(--line-2);font-size:13.5px;color:var(--ink-3)}
-.foot-bot .mono{font-size:12px}
-.foot-bot a:hover{color:var(--blue)}
-
-/* ---------- responsive ---------- */
-@media (max-width:1080px){
-  .nav-links a{padding:8px 10px}
-  .hero-main{grid-template-columns:1fr;gap:24px}
-  .radar-wrap{justify-self:center;max-width:480px;margin-top:8px}
-  .specs{grid-template-columns:repeat(2,1fr)}
-  .spec:nth-child(3){border-left:0;padding-left:0}
-  .spec:nth-child(n+3){border-top:1px solid var(--line)}
-  .demo{grid-template-columns:1fr}
-  .scenes{display:grid;grid-template-columns:1fr 1fr}
-  .sum-card{grid-template-columns:1fr;gap:24px;padding:40px 40px}
-}
-@media (max-width:860px){
-  :root{--gutter:16px;--nav-h:60px}
-  .menu-btn{display:flex}
-  .nav-links{position:absolute;top:var(--nav-h);left:0;right:0;margin:0;flex-direction:column;gap:0;padding:8px 16px 16px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--line);transform:translateY(-8px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
-  .nav.open .nav-links{opacity:1;transform:none;pointer-events:auto}
-  .nav-links a{padding:14px 4px;border-bottom:1px solid var(--line);border-radius:0}
-  .nav-links a::after{display:none}
-  .lang{margin-left:auto}
-  .nav-in{gap:12px}
-  section{padding:96px 0}
-  .sec-head{grid-template-columns:1fr;margin-bottom:44px}
-  section.cmp{padding:56px 0}
-  .cmp-body .pills{margin-top:22px}
-  .cmp-grid{grid-template-columns:1fr;gap:18px}
-  .cmp-head h2{margin-top:12px}
-  .pills{grid-template-columns:1fr;gap:10px}
-  .stats{grid-template-columns:1fr}
-  .stat{display:grid;grid-template-columns:128px minmax(0,1fr);grid-template-rows:auto auto;align-content:center;column-gap:14px;padding:16px 18px;border-left:0;border-top:1px solid var(--line)}
-  .stat:first-child{border-top:0}
-  .stat .sv{grid-row:1/3}
-  .stat b{margin-top:0}
-  .m-pipe{padding:22px 18px}
-  .pipe{grid-template-columns:1fr}
-  .pipe>*{grid-row:auto!important;grid-column:auto!important}
-  .pcap{margin:12px 0 0}
-  .arrow{justify-self:center;width:2px;height:30px;margin:14px 0;background:linear-gradient(180deg,var(--line-2) 50%,transparent 0) 0 0/2px 6px}
-  .arrow::before{display:none}
-  .arrow::after{right:auto;top:auto;left:50%;bottom:0;transform:translateX(-50%) rotate(135deg)}
-  .core{aspect-ratio:auto;gap:16px;padding:20px 18px 16px;border-radius:16px 16px 0 0}
-  .core::before{display:none}
-  .core svg{width:104px;height:57px}
-  .conds{margin-top:0;padding:0 12px 14px;gap:6px;border-radius:0 0 16px 16px;background:var(--ink)}
-  .cond{padding:10px 4px;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.06)}
-  .cond::before,.cond::after{display:none}
-  .cond .ic{background:rgba(255,255,255,.08)}
-  .cond b{font-size:12.5px;color:#fff}
-  .cond .mech{background:rgba(255,255,255,.08)}
-  .arch-head{margin-bottom:20px}
-  .pfoot{grid-template-columns:1fr;gap:12px}
-}
-@media (max-width:560px){
-  .hero{padding-top:calc(var(--nav-h) + 36px)}
-  .hero .tagline{font-size:16px}
-  .btn{height:46px;padding:0 20px;font-size:14px}
-  .specs{grid-template-columns:1fr}
-  .spec{border-left:0;padding-left:0;border-top:1px solid var(--line);padding:18px 0}
-  .spec:first-child{border-top:0}
-  .readout{display:none}
-  .brand i,.brand b{display:none}
-  .player-bar .right span:nth-child(2){display:none}
-  .player-bar .right span:nth-child(3)::before{content:"/";margin-right:14px;color:rgba(255,255,255,.25)}
-  .scenes{grid-template-columns:1fr}
-  .sum-card{padding:32px 20px 24px;border-radius:20px}
-  .feats{gap:8px}
-  .feat{padding:11px 12px;gap:10px}
-  .feat b{font-size:14.5px}
-}
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  html{scroll-behavior:auto}
-  .js .rv{opacity:1;transform:none}
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>X-World 1.0 — Controllable Multi-Camera World Model</title>
+  <meta name="description" content="X-World 1.0 generates future multi-camera driving video from visual history and ego actions, with optional scene and appearance controls. A research project by the XPeng GWM Team.">
+  <meta property="og:title" content="X-World 1.0 — Controllable Multi-Camera World Model">
+  <meta property="og:description" content="Action-conditioned multi-camera generation. Explore the model, demonstrations and technical report.">
+  <meta property="og:url" content="https://x-world-1.github.io/">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="img/favicon.ico">
+  <link rel="preload" href="assets/fonts/instrument-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
 </head>
 <body>
-
-<!-- ============ NAV ============ -->
-<nav class="nav" id="nav">
-  <div class="wrap nav-in">
-    <a class="brand" href="#top" aria-label="X-World">
-      <img src="img/xpeng_primary_logo-black-OGP6DCC3.svg" alt="XPeng" width="440" height="70">
-      <i></i><b>X-World</b>
-    </a>
-    <div class="nav-links" id="navLinks">
-      <a href="#intro" data-i18n="nav.intro">Overview</a>
-      <a href="#architecture" data-i18n="nav.arch">How It Works</a>
-      <a href="#results" data-i18n="nav.results">Results</a>
-      <a href="#demos" data-i18n="nav.demos">Demos</a>
-    </div>
-    <div class="lang" role="group" aria-label="Language">
-      <button type="button" data-lang="en" class="on">EN</button>
-      <button type="button" data-lang="zh">中文</button>
-    </div>
-    <button class="menu-btn" id="menuBtn" type="button" aria-label="Menu" data-i18n-aria="nav.menu" aria-expanded="false"><span></span></button>
-  </div>
-  <div class="nav-progress" id="progress"></div>
-</nav>
-
-<!-- ============ HERO ============ -->
-<header class="hero" id="top">
-  <div class="grid-bg"></div>
-  <div class="glow g1"></div><div class="glow g2"></div>
-  <div class="wrap hero-main">
-    <div>
-      <div class="hero-badges">
-        <span class="chip"><span class="dot live"></span><span data-i18n="hero.badge">XPeng GWM Team</span></span>
-        <a class="chip mono" href="https://arxiv.org/abs/2603.19979" target="_blank" rel="noopener">arXiv 2603.19979</a>
-      </div>
-      <h1><span class="x">X</span>-World</h1>
-      <div class="kicker" data-i18n="hero.kicker">Controllable Ego-Centric Multi-Camera World Model</div>
-      <p class="subtitle" data-i18n="hero.subtitle">Teaching Cars to Foresee the Future</p>
-      <p class="tagline" data-i18n="hero.tagline">An AI system that thinks through driving scenes — giving cars an imagination to foresee how the road ahead will change.</p>
-      <div class="hero-cta">
-        <a class="btn btn-primary" href="#intro"><span data-i18n="hero.cta1">Learn More</span>
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
-        <a class="btn btn-ghost" href="https://arxiv.org/pdf/2603.19979" target="_blank" rel="noopener">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13M6.5 8.5h4M6.5 11h4"/></svg>
-          <span data-i18n="hero.cta2">Technical Report</span></a>
+  <a class="skip-link" href="#main" data-en="Skip to content" data-zh="跳转到正文">Skip to content</a>
+  <header class="site-header" id="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="XPENG · X-World 1.0">
+        <img src="img/xpeng_primary_logo-black-OGP6DCC3.svg" width="110" height="18" alt="XPENG">
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span>X-World <b>1.0</b></span>
+      </a>
+      <nav class="site-links" id="site-links" aria-label="Main navigation">
+        <a href="#overview" data-en="Overview" data-zh="概览">Overview</a>
+        <a href="#capabilities" data-en="Capabilities" data-zh="能力演示">Capabilities</a>
+        <a href="#method" data-en="Method" data-zh="技术方法">Method</a>
+        <a href="#resources" data-en="Citation" data-zh="引用">Citation</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language" role="group" aria-label="Language">
+          <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" data-lang="zh" aria-pressed="false" lang="zh-CN">中文</button>
+        </div>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu / 菜单"><span></span><span></span></button>
       </div>
     </div>
+  </header>
 
-    <div class="radar-wrap" aria-hidden="true">
-      <svg class="radar" id="radar" viewBox="-300 -300 600 600">
-        <defs>
-          <radialGradient id="fovGrad" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="232">
-            <stop offset=".2" stop-color="#1a56ff" stop-opacity=".22"/>
-            <stop offset="1" stop-color="#00b4ff" stop-opacity=".02"/>
-          </radialGradient>
-          <radialGradient id="sweepGrad" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="232">
-            <stop offset="0" stop-color="#00b4ff" stop-opacity="0"/>
-            <stop offset="1" stop-color="#00b4ff" stop-opacity=".28"/>
-          </radialGradient>
-        </defs>
-        <line class="axis" x1="-290" y1="0" x2="290" y2="0"/>
-        <line class="axis" x1="0" y1="-290" x2="0" y2="290"/>
-        <circle class="ring" r="246"/>
-        <circle class="ring" r="232"/>
-        <circle class="ring dash" r="150"/>
-        <circle class="ring dash" r="76"/>
-        <g id="ticks"></g>
-        <g id="fovs"></g>
-        <g class="sweep" id="sweep"></g>
-        <g id="packets"></g>
-        <circle class="core" r="40"/>
-        <g class="car">
-          <rect class="car-body" x="-19" y="-38" width="38" height="76" rx="12"/>
-          <path class="car-glass" d="M-13 -17 Q0 -24 13 -17 L11 -7 L-11 -7 Z"/>
-          <path class="car-glass" d="M-11 17 L11 17 L12 26 Q0 30 -12 26 Z" opacity=".55"/>
-        </g>
-        <g id="nodes"></g>
-      </svg>
-      <div class="readout r1">SURROUND<b>360°</b></div>
-      <div class="readout r2">7 × CAM · SYNC<b>VIEW-TEMPORAL</b></div>
-    </div>
-  </div>
+  <main id="main">
+    <section class="hero container" id="top" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">XPENG GWM TEAM <span aria-hidden="true">/</span> RESEARCH</p>
+        <h1 id="hero-title">X-World <span>1.0</span></h1>
+        <p class="hero-subtitle" data-en="A controllable multi-camera world model." data-zh="面向自动驾驶的可控多摄像头世界模型。">A controllable multi-camera world model.</p>
+        <p class="hero-description" data-en="Generate future driving observations from multi-view history and ego actions, with optional control over the scene and its appearance." data-zh="基于多视角历史观测与自车动作，生成未来驾驶画面，并支持场景元素与全局外观控制。">Generate future driving observations from multi-view history and ego actions, with optional control over the scene and its appearance.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#capabilities"><span data-en="Explore the demos" data-zh="查看能力演示">Explore the demos</span><span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="https://arxiv.org/pdf/2603.19979v2" target="_blank" rel="noopener"><span data-en="Technical report" data-zh="阅读技术报告">Technical report</span><span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
 
-  <div class="wrap">
-    <div class="specs">
-      <div class="spec"><div class="k"><em>/01</em><span data-i18n="spec1.k">Input</span></div><div class="v" data-i18n="spec1.v">7-camera surround view</div></div>
-      <div class="spec"><div class="k"><em>/02</em><span data-i18n="spec2.k">Condition</span></div><div class="v" data-i18n="spec2.v">Ego action + scene control</div></div>
-      <div class="spec"><div class="k"><em>/03</em><span data-i18n="spec3.k">Horizon</span></div><div class="v" data-i18n="spec3.v">Tens of seconds, stable</div></div>
-      <div class="spec"><div class="k"><em>/04</em><span data-i18n="spec4.k">Style</span></div><div class="v" data-i18n="spec4.v">Text-driven weather &amp; time</div></div>
-    </div>
-  </div>
-</header>
+    <section class="section container overview" id="overview" aria-labelledby="overview-title">
+      <div class="section-layout">
+        <header class="section-heading">
+          <p class="eyebrow"><span class="section-number">01</span><span data-en="OVERVIEW" data-zh="模型概览">OVERVIEW</span></p>
+          <h2 id="overview-title" data-en="From actions to future observations." data-zh="从动作条件，到未来观测。">From actions to future observations.</h2>
+        </header>
+        <div class="overview-body">
+          <p class="lede" data-en="X-World models how a driving scene evolves under a specified action sequence. It generates synchronized multi-camera video directly in observation space." data-zh="X-World 建模驾驶场景在给定动作序列下的变化，直接在视频空间中生成同步的多摄像头未来观测。">X-World models how a driving scene evolves under a specified action sequence. It generates synchronized multi-camera video directly in observation space.</p>
+          <dl class="overview-list">
+            <div><dt data-en="Observe" data-zh="历史观测">Observe</dt><dd data-en="A short history from seven synchronized cameras provides the visual context." data-zh="七路同步相机的短时历史画面，提供当前场景的视觉上下文。">A short history from seven synchronized cameras provides the visual context.</dd></div>
+            <div><dt data-en="Condition" data-zh="控制条件">Condition</dt><dd data-en="Specify future ego motion. Add traffic agents, road elements or appearance prompts when needed." data-zh="指定未来自车运动；按需加入交通参与者、道路元素或外观文本条件。">Specify future ego motion. Add traffic agents, road elements or appearance prompts when needed.</dd></div>
+            <div><dt data-en="Generate" data-zh="未来生成">Generate</dt><dd data-en="Predict the corresponding multi-camera future, with joint modeling across views and time." data-zh="联合建模视角与时间，生成与控制条件对应的多摄像头未来视频。">Predict the corresponding multi-camera future, with joint modeling across views and time.</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
 
-<main>
-<!-- ============ 01 INTRO ============ -->
-<section id="intro" class="cmp">
-  <div class="wrap cmp-grid">
-    <div class="cmp-head">
-      <div class="sec-meta rv"><span class="no">01</span><span class="lbl" data-i18n="intro.label">Introduction</span><span class="rule"></span><span>XW / §01</span></div>
-      <h2 class="rv d1" data-i18n="intro.title">What Is X-World?</h2>
-    </div>
-    <div class="cmp-body">
-      <p class="lead rv d2" data-i18n="intro.desc">Given the current road scene and a driving action, X-World imagines what the road will look like seconds later — so cars can learn to drive in a virtual world instead of on real roads.</p>
-      <div class="pills">
-        <article class="pill rv">
-          <span class="pk"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="14" cy="14" r="4"/><circle cx="14" cy="14" r="10" stroke-dasharray="2 3"/><path d="M14 2.5v3M14 22.5v3M2.5 14h3M22.5 14h3"/></svg><span data-i18n="p1.tag">Cross-view consistency</span></span>
-          <h3 data-i18n="p1.title">7 Cameras, One View</h3>
-          <p data-i18n="p1.desc">Seven cameras stitched into one consistent 360° view — no misalignment, no blur.</p>
+    <section class="section container capabilities" id="capabilities" aria-labelledby="capabilities-title">
+      <header class="wide-section-heading">
+        <div><p class="eyebrow"><span class="section-number">02</span><span data-en="CAPABILITIES" data-zh="能力演示">CAPABILITIES</span></p><h2 id="capabilities-title" data-en="Control the conditions. See the result." data-zh="改变条件，观察生成结果。">Control the conditions. See the result.</h2></div>
+        <p data-en="Four demonstrations of action following, scene control, temporal continuity and appearance editing." data-zh="通过四类演示，观察动作跟随、场景控制、时序连贯性与外观编辑。">Four demonstrations of action following, scene control, temporal continuity and appearance editing.</p>
+      </header>
+      <div class="demo-grid">
+        <article class="demo-card" aria-labelledby="demo-action-title">
+          <header><span class="demo-number">01</span><h3 id="demo-action-title" data-en="Ego-action control" data-zh="自车动作控制">Ego-action control</h3></header>
+          <div class="demo-media"><video class="demo-video" id="demo-action" src="video/002.mp4" poster="assets/posters/01_action-control.jpg" autoplay loop muted playsinline preload="metadata" tabindex="-1" disablepictureinpicture disableremoteplayback aria-label="Ego-action control / 自车动作控制"></video></div>
+          <p class="media-error" role="status" hidden data-en="This video could not be loaded. Please reload the page to retry." data-zh="视频暂时无法加载，请刷新页面重试。">This video could not be loaded. Please reload the page to retry.</p>
+          <p class="demo-caption" data-en="Starting from the same scene, vary ego-motion conditions such as speed and curvature to generate straight driving, acceleration and turns." data-zh="给定相同初始场景，通过速度、曲率等动作条件，观察直行、加速与转向的生成结果。">Starting from the same scene, vary ego-motion conditions such as speed and curvature to generate straight driving, acceleration and turns.</p>
         </article>
-        <article class="pill rv d1">
-          <span class="pk"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="7" height="14" rx="1.5" opacity=".45"/><rect x="10.5" y="7" width="7" height="14" rx="1.5" opacity=".75"/><rect x="18" y="7" width="7" height="14" rx="1.5"/></svg><span data-i18n="p2.tag">Temporal coherence</span></span>
-          <h3 data-i18n="p2.title">Seamless, Never Stutters</h3>
-          <p data-i18n="p2.desc">Tens of seconds of continuous video, every frame in step.</p>
+        <article class="demo-card" aria-labelledby="demo-scene-title">
+          <header><span class="demo-number">02</span><h3 id="demo-scene-title" data-en="Dynamic &amp; static scene control" data-zh="动态与静态场景控制">Dynamic &amp; static scene control</h3></header>
+          <div class="demo-media"><video class="demo-video" id="demo-scene" src="video/003.mp4" poster="assets/posters/02_multi-agent-control.jpg" autoplay loop muted playsinline preload="metadata" tabindex="-1" disablepictureinpicture disableremoteplayback aria-label="Dynamic and static scene control / 动态与静态场景控制"></video></div>
+          <p class="media-error" role="status" hidden data-en="This video could not be loaded. Please reload the page to retry." data-zh="视频暂时无法加载，请刷新页面重试。">This video could not be loaded. Please reload the page to retry.</p>
+          <p class="demo-caption" data-en="Condition on traffic participants, road boundaries and lane markings. Compare the generated scene with these spatial controls across views." data-zh="以交通参与者、道路边界与车道线作为条件，观察动静态元素在各相机视角中的对应关系。">Condition on traffic participants, road boundaries and lane markings. Compare the generated scene with these spatial controls across views.</p>
         </article>
-        <article class="pill rv d2">
-          <span class="pk"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="14" cy="14" r="11"/><circle cx="14" cy="14" r="3"/><path d="M3.5 12.5 11 14M24.5 12.5 17 14M14 17v7.5"/></svg><span data-i18n="p3.tag">Precise controllability</span></span>
-          <h3 data-i18n="p3.title">You're in Command</h3>
-          <p data-i18n="p3.desc">Follows your driving commands; weather, time of day and region on demand.</p>
+        <article class="demo-card" aria-labelledby="demo-long-title">
+          <header><span class="demo-number">03</span><h3 id="demo-long-title" data-en="Long-horizon multi-camera generation" data-zh="长时序多摄生成">Long-horizon multi-camera generation</h3></header>
+          <div class="demo-media"><video class="demo-video" id="demo-long" src="video/004.mp4" poster="assets/posters/03_long-horizon-prediction.jpg" autoplay loop muted playsinline preload="metadata" tabindex="-1" disablepictureinpicture disableremoteplayback aria-label="Long-horizon multi-camera generation / 长时序多摄生成"></video></div>
+          <p class="media-error" role="status" hidden data-en="This video could not be loaded. Please reload the page to retry." data-zh="视频暂时无法加载，请刷新页面重试。">This video could not be loaded. Please reload the page to retry.</p>
+          <p class="demo-caption" data-en="Generate future video chunk by chunk. Follow the continuity of motion, geometry and appearance across time and camera views." data-zh="逐段生成未来视频，观察长时序推演中跨视角的运动、几何与外观连续性。">Generate future video chunk by chunk. Follow the continuity of motion, geometry and appearance across time and camera views.</p>
+        </article>
+        <article class="demo-card" aria-labelledby="demo-appearance-title">
+          <header><span class="demo-number">04</span><h3 id="demo-appearance-title" data-en="Appearance editing" data-zh="外观编辑">Appearance editing</h3></header>
+          <div class="demo-media"><video class="demo-video" id="demo-appearance" src="video/001.mp4" poster="assets/posters/04_style-transfer.jpg" autoplay loop muted playsinline preload="metadata" tabindex="-1" disablepictureinpicture disableremoteplayback aria-label="Appearance editing / 外观编辑"></video></div>
+          <p class="media-error" role="status" hidden data-en="This video could not be loaded. Please reload the page to retry." data-zh="视频暂时无法加载，请刷新页面重试。">This video could not be loaded. Please reload the page to retry.</p>
+          <p class="demo-caption" data-en="Keep ego actions and scene conditions fixed while text prompts change weather and time of day. All frames are generated in this C2V setting." data-zh="固定动作与动静态条件，通过文本改变天气、时段等外观。在 C2V 设置下，包括首帧在内的所有画面均由模型生成。">Keep ego actions and scene conditions fixed while text prompts change weather and time of day. All frames are generated in this C2V setting.</p>
         </article>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ============ 02 ARCHITECTURE ============ -->
-<section id="architecture" class="arch cmp">
-  <div class="grid-bg"></div>
-  <div class="wrap" style="position:relative">
-    <div class="cmp-grid arch-head">
-      <div class="cmp-head">
-        <div class="sec-meta rv"><span class="no">02</span><span class="lbl" data-i18n="arch.label">Architecture</span><span class="rule"></span><span>XW / §02</span></div>
-        <h2 class="rv d1" data-i18n="arch.title">How It Works</h2>
-      </div>
-      <p class="arch-desc rv d2" data-i18n="arch.desc">Given multi-camera history and a future action sequence, X-World generates the matching multi-camera future video.</p>
-    </div>
-    <div class="panel m-pipe rv">
-      <div class="pipe">
-        <div class="pimg in"><img src="assets/method/history.jpg" alt="" loading="lazy" width="960" height="540"><em data-i18n="m.badge.obs">OBSERVED</em></div>
-        <div class="pcap in"><b data-i18n="m.in.t">Multi-view history</b><span data-i18n="m.in.d">7 cameras · observed</span></div>
-        <i class="arrow a1"></i>
-        <div class="core">
-          <svg id="tokGrid" viewBox="0 0 132 72" aria-hidden="true"><rect x="89.5" y="1" width="9" height="70" rx="4.5" fill="rgba(127,216,255,.14)"/><rect x="1" y="21.5" width="130" height="9" rx="4.5" fill="rgba(127,216,255,.1)"/></svg>
-          <div><b data-i18n="m.core.t">Multi-View DiT</b><span class="k" data-i18n="m.core.k">view-temporal attention</span><span class="d" data-i18n="m.core.d">3D causal VAE · WAN 2.2 5B</span></div>
+    <section class="method-section" id="method" aria-labelledby="method-title">
+      <div class="section container">
+        <header class="wide-section-heading">
+          <div><p class="eyebrow"><span class="section-number">03</span><span data-en="METHOD" data-zh="技术方法">METHOD</span></p><h2 id="method-title" data-en="One model, multiple conditions." data-zh="多种控制条件，统一生成。">One model, multiple conditions.</h2></div>
+          <p data-en="A multi-view latent video generator, built on WAN 2.2 5B, combines visual history with distinct control signals." data-zh="基于 WAN 2.2 5B 的多视角潜空间视频生成器，将历史视觉信息与不同类型的控制信号结合。">A multi-view latent video generator, built on WAN 2.2 5B, combines visual history with distinct control signals.</p>
+        </header>
+        <figure class="method-figure">
+          <div class="architecture-scroll" role="region" tabindex="0" aria-label="X-World model architecture / X-World 模型结构图">
+            <img class="architecture-image" src="assets/method/model-architecture.svg" width="1616" height="384" alt="X-World architecture: multi-view frames are encoded into video tokens, processed through view-temporal self-attention with ego-action and environment conditioning via multi-head cross-attention, then decoded into multi-view videos." loading="lazy">
+          </div>
+          <figcaption data-en="X-World model architecture · Figure 2 from the technical report." data-zh="X-World 模型结构 · 技术报告图 2。">X-World model architecture · Figure 2 from the technical report.</figcaption>
+        </figure>
+        <div class="method-notes">
+          <article><span class="micro-label">01 / ATTENTION</span><h3 data-en="Connect views and time" data-zh="连接视角与时间">Connect views and time</h3><p data-en="Alternating attention across cameras and timesteps models shared geometry, object identity and motion." data-zh="在相机视角与时间维度交替执行注意力，建模跨视角几何、物体身份与运动关系。">Alternating attention across cameras and timesteps models shared geometry, object identity and motion.</p></article>
+          <article><span class="micro-label">02 / CONDITIONING</span><h3 data-en="Keep controls distinct" data-zh="分离不同控制信号">Keep controls distinct</h3><p data-en="Ego actions use adaptive normalization; camera parameters use additive embeddings. Separate cross-attention branches handle dynamic agents, static elements and text." data-zh="自车动作通过自适应归一化注入，相机参数通过加性嵌入注入；动态参与者、静态元素与文本使用独立交叉注意力分支。">Ego actions use adaptive normalization; camera parameters use additive embeddings. Separate cross-attention branches handle dynamic agents, static elements and text.</p></article>
+          <article><span class="micro-label">03 / REPRESENTATION</span><h3 data-en="Work in video latent space" data-zh="在视频潜空间中建模">Work in video latent space</h3><p data-en="A 3D causal VAE encodes video into a compact representation. A multi-view DiT generates future latents that are decoded back into camera observations." data-zh="3D 因果 VAE 将视频编码为紧凑表示，多视角 DiT 生成未来潜变量，再解码为相机观测。">A 3D causal VAE encodes video into a compact representation. A multi-view DiT generates future latents that are decoded back into camera observations.</p></article>
         </div>
-        <div class="conds">
-          <div class="cond g-ada"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7.5"/><circle cx="10" cy="10" r="2"/><path d="M2.8 8.6 8 10M17.2 8.6 12 10M10 12v5.5"/></svg></span><b data-i18n="m.c1">Ego action</b><span class="mech">adaLN-Zero</span></div>
-          <div class="cond g-xa"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2.5" y="2.5" width="15" height="15" rx="2" stroke-dasharray="3 2"/><path d="M6 13v-2.4L7.3 8h5.4L14 10.6V13Z"/></svg></span><b data-i18n="m.c2">Agents &amp; road</b><span class="mech">cross-attn</span></div>
-          <div class="cond g-xa"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5h12M10 5v11M7.5 16h5"/></svg></span><b data-i18n="m.c3">Text prompt</b><span class="mech">cross-attn</span></div>
-        </div>
-        <i class="arrow a2"></i>
-        <div class="pimg out"><img src="assets/method/future.jpg" alt="" loading="lazy" width="960" height="540"><em data-i18n="m.badge.gen">GENERATED</em></div>
-        <div class="pcap out"><b data-i18n="m.out.t">Multi-view future</b><span data-i18n="m.out.d">7 synchronized streams</span></div>
-      </div>
-      <div class="pfoot">
-        <div><span class="no">01</span><b class="pf-t" data-i18n="m.k1.t">View-temporal attention</b><span class="pf-d" data-i18n="m.k1.s">consistent across 7 cameras and over time</span></div>
-        <div><span class="no">02</span><b class="pf-t" data-i18n="m.k2.t">Decoupled conditions</b><span class="pf-d" data-i18n="m.k2.s">adaLN-Zero + separate cross-attention</span></div>
-        <div><span class="no">03</span><b class="pf-t" data-i18n="m.k3.t">Two-stage training</b><span class="pf-d"><b>50 → 4</b> <span data-i18n="m.k3.a">denoising steps</span> · <b>24 s</b> <span data-i18n="m.k3.b">streaming rollout</span></span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 03 RESULTS ============ -->
-<section id="results" class="cmp">
-  <div class="wrap cmp-grid">
-    <div class="cmp-head">
-      <div class="sec-meta rv"><span class="no">03</span><span class="lbl" data-i18n="results.label">Technical Strength</span><span class="rule"></span><span>XW / §03</span></div>
-      <h2 class="rv d1" data-i18n="results.title">A Generation Ahead — See It to Believe It</h2>
-      <p class="rv d2" data-i18n="results.desc">Faster iteration, longer rollouts, far lower scenario cost.</p>
-    </div>
-    <div class="stats rv">
-      <div class="stat">
-        <div class="sv"><span class="num" data-count="2" data-dec="0">2</span><span class="unit" data-i18n="s1.unit">days</span></div>
-        <b data-i18n="s1.title">End-to-End Model Iteration Cycle</b><span class="sd" data-i18n="s1.desc">2× boost in driving capability</span>
-      </div>
-      <div class="stat hl">
-        <div class="sv"><span class="num" data-count="99.9" data-dec="1">99.9</span><span class="unit">%</span></div>
-        <b data-i18n="s2.title">Scenario Coverage</b><span class="sd" data-i18n="s2.desc">Coherent prediction of scene changes</span>
-      </div>
-      <div class="stat">
-        <div class="sv"><span class="num" data-count="90" data-dec="0">90</span><span class="unit">%</span></div>
-        <b data-i18n="s3.title">Lower Scenario Generation Cost</b><span class="sd" data-i18n="s3.desc">Major boost in R&amp;D efficiency</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 04 DEMOS ============ -->
-<section id="demos" style="padding-top:40px">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="sec-meta rv"><span class="no">04</span><span class="lbl" data-i18n="demos.label">Capabilities</span><span class="rule"></span><span>XW / §04</span></div>
-      <h2 class="rv d1" data-i18n="demos.title">What It Can Do</h2>
-      <p class="rv d2" data-i18n="demos.desc">Four core capabilities in action</p>
-    </div>
-    <div class="demo rv">
-      <div class="player paused" id="player">
-        <div class="player-bar">
-          <span class="left"><span class="dot live"></span><span id="scnLabel">Scenario 01 / 04</span></span>
-          <span class="right"><span>7-CAM</span><span>2560×1440</span><span>X-WORLD</span></span>
-        </div>
-        <div class="screen" id="screen">
-          <video id="video" muted playsinline preload="metadata" poster="assets/posters/01_action-control.jpg"></video>
-          <div class="fade"></div>
-        </div>
-        <div class="ctrl">
-          <button class="play" id="playBtn" type="button" aria-label="Play">
-            <svg class="i-play" viewBox="0 0 14 14" fill="currentColor"><path d="M3 1.8v10.4L12 7z"/></svg>
-            <svg class="i-pause" viewBox="0 0 14 14" fill="currentColor"><rect x="2.5" y="2" width="3.2" height="10" rx=".8"/><rect x="8.3" y="2" width="3.2" height="10" rx=".8"/></svg>
-          </button>
-          <div class="track" id="track"><div class="track-in"><i id="trackFill"></i></div></div>
-          <span class="time" id="time">00:00 / 00:00</span>
+        <div class="training">
+          <div class="training-heading"><h3 data-en="From short clips to streaming generation" data-zh="从短片生成到流式推演">From short clips to streaming generation</h3></div>
+          <div class="training-stages">
+            <article><p class="micro-label" data-en="STAGE I" data-zh="第一阶段">STAGE I</p><h4 data-en="Learn controllable multi-view generation" data-zh="学习可控多视角生成">Learn controllable multi-view generation</h4><p data-en="Bidirectional training on synchronized short clips establishes action following, scene control and cross-view modeling." data-zh="通过同步多摄短片的双向训练，学习动作跟随、场景控制与跨视角建模。">Bidirectional training on synchronized short clips establishes action following, scene control and cross-view modeling.</p><span class="stage-detail" data-en="Bidirectional generation · typically ~50 denoising steps" data-zh="双向生成 · 通常约 50 步去噪">Bidirectional generation · typically ~50 denoising steps</span></article>
+            <article><p class="micro-label" data-en="STAGE II" data-zh="第二阶段">STAGE II</p><h4 data-en="Generate the future chunk by chunk" data-zh="逐块生成未来视频">Generate the future chunk by chunk</h4><p data-en="A causal model uses self-forcing and distribution matching distillation. A rolling KV cache carries recent context into subsequent chunks." data-zh="因果模型通过 Self-forcing 与分布匹配蒸馏训练，使用滚动 KV 缓存将近期上下文传递到后续视频块。">A causal model uses self-forcing and distribution matching distillation. A rolling KV cache carries recent context into subsequent chunks.</p><span class="stage-detail" data-en="Causal generation · 4 denoising steps per chunk" data-zh="因果生成 · 每个视频块 4 步去噪">Causal generation · 4 denoising steps per chunk</span></article>
+          </div>
         </div>
       </div>
-      <div class="scenes" id="scenes">
-        <button class="scene on" type="button" data-i="0"><span class="bar"><i></i></span>
-          <span class="scene-head"><span class="tag" data-i18n="d1.tag">Feature 01</span><span class="num">01</span></span>
-          <h3 data-i18n="d1.title">Action Control</h3>
-          <span class="desc"><p data-i18n="d1.desc">Command “turn left” and the generated scene turns left; command “accelerate” and it surges forward. The AI understands your intent and renders the matching views.</p></span>
-        </button>
-        <button class="scene" type="button" data-i="1"><span class="bar"><i></i></span>
-          <span class="scene-head"><span class="tag" data-i18n="d2.tag">Feature 02</span><span class="num">02</span></span>
-          <h3 data-i18n="d2.title">Multi-Agent Control</h3>
-          <span class="desc"><p data-i18n="d2.desc">Control how other vehicles in the scene behave — make them speed up, slow down or change lanes, as if you were directing real traffic.</p></span>
-        </button>
-        <button class="scene" type="button" data-i="2"><span class="bar"><i></i></span>
-          <span class="scene-head"><span class="tag" data-i18n="d3.tag">Feature 03</span><span class="num">03</span></span>
-          <h3 data-i18n="d3.title">Long-Horizon Prediction</h3>
-          <span class="desc"><p data-i18n="d3.desc">Tens of seconds of continuous generation without “collapsing” — the footage stays stable and coherent, just like a real dashcam recording.</p></span>
-        </button>
-        <button class="scene" type="button" data-i="3"><span class="bar"><i></i></span>
-          <span class="scene-head"><span class="tag" data-i18n="d4.tag">Feature 04</span><span class="num">04</span></span>
-          <h3 data-i18n="d4.title">Style Transfer</h3>
-          <span class="desc"><p data-i18n="d4.desc">Change the weather and time of day with one sentence: want “rain”? “night”? Even “streets of Germany”? Just say it.</p></span>
-        </button>
+    </section>
+
+    <section class="section container resources" id="resources" aria-labelledby="resources-title">
+      <div class="section-layout">
+        <header class="section-heading"><p class="eyebrow"><span class="section-number">04</span><span data-en="CITATION" data-zh="引用">CITATION</span></p><h2 id="resources-title" data-en="Cite X-World." data-zh="引用 X-World。">Cite X-World.</h2><p data-en="If X-World supports your research, please cite our technical report." data-zh="如果 X-World 对你的研究有帮助，欢迎引用我们的技术报告。">If X-World supports your research, please cite our technical report.</p></header>
+        <div class="resources-body">
+          <div class="citation"><div class="citation-heading"><span class="micro-label">BIBTEX</span><div class="copy-area"><span id="copy-status" role="status" aria-live="polite"></span><button id="copy-citation" type="button" data-en="Copy citation" data-zh="复制引用">Copy citation</button></div></div><pre><code id="citation-code">@misc{zheng2026xworld,
+  title={X-World: Controllable Ego-Centric Multi-Camera World Models for Scalable End-to-End Driving},
+  author={Chaoda Zheng and Sean Li and Jinhao Deng and Zhennan Wang and Shijia Chen and Liqiang Xiao and Ziheng Chi and Hongbin Lin and Kangjie Chen and Boyang Wang and Yu Zhang and Xianming Liu},
+  year={2026},
+  eprint={2603.19979},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV},
+  url={https://arxiv.org/abs/2603.19979}
+}</code></pre></div>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ SUMMARY ============ -->
-<section id="summary" class="summary">
-  <div class="wrap">
-    <div class="sum-card rv">
-      <div class="bg"></div>
-      <span class="hud tl"></span><span class="hud tr"></span><span class="hud bl"></span><span class="hud br"></span>
-      <div>
-        <div class="eyebrow">X-WORLD</div>
-        <h2 data-i18n="summary.title">Why Does It Matter?</h2>
-        <p data-i18n="summary.desc">More than a video generator — a virtual driving instructor that lets cars learn every scenario safely, in any weather, time of day or road condition.</p>
-      </div>
-      <div class="feats">
-        <div class="feat"><span class="ck"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8.5 3 3 6-7"/></svg></span><b data-i18n="f1">Safe &amp; Controllable</b></div>
-        <div class="feat"><span class="ck"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8.5 3 3 6-7"/></svg></span><b data-i18n="f2">Lower Cost</b></div>
-        <div class="feat"><span class="ck"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8.5 3 3 6-7"/></svg></span><b data-i18n="f3">Unlimited Scenarios</b></div>
-        <div class="feat"><span class="ck"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8.5 3 3 6-7"/></svg></span><b data-i18n="f4">Faster Training</b></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ CITATION ============ -->
-<section id="cite" class="cmp cite">
-  <div class="wrap cmp-grid">
-    <div class="cmp-head">
-      <div class="sec-meta rv"><span class="lbl" data-i18n="cite.label">Citation</span><span class="rule"></span><span>BibTeX</span></div>
-      <h2 class="rv d1" data-i18n="cite.title">Cite X-World</h2>
-      <p class="rv d2" data-i18n="cite.desc">If X-World helps your research, please cite our technical report.</p>
-    </div>
-    <div class="bib rv">
-      <div class="bib-bar">
-        <span class="k-lab"><i></i>BibTeX</span>
-        <button class="bib-copy" id="bibCopy" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg><span id="bibCopyLbl" data-i18n="bib.copy">Copy</span></button>
-      </div>
-      <div class="bib-code" id="bibCode">
-        <div class="ln"><span class="bt">@article</span><span class="p">{</span><span class="bk">zheng2026x</span><span class="p">,</span></div>
-        <div class="ln">  <span class="bf">title</span><span class="p">={</span>X-World: Controllable Ego-Centric Multi-Camera World Models for Scalable End-to-End Driving<span class="p">},</span></div>
-        <div class="ln">  <span class="bf">author</span><span class="p">={</span>Zheng, Chaoda and Li, Sean and Deng, Jinhao and Wang, Zhennan and Chen, Shijia and Xiao, Liqiang and Chi, Ziheng and Lin, Hongbin and Chen, Kangjie and Wang, Boyang and others<span class="p">},</span></div>
-        <div class="ln">  <span class="bf">journal</span><span class="p">={</span>arXiv preprint arXiv:2603.19979<span class="p">},</span></div>
-        <div class="ln">  <span class="bf">year</span><span class="p">={</span>2026<span class="p">}</span></div>
-        <div class="ln"><span class="p">}</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-</main>
-
-<!-- ============ FOOTER ============ -->
-<footer>
-  <div class="wrap">
-    <div class="foot-top">
-      <div class="foot-brand">
-        <img src="img/xpeng_primary_logo-black-OGP6DCC3.svg" alt="XPeng" width="440" height="70">
-        <i></i><b>X-World</b>
-      </div>
-      <a class="btn btn-primary" href="https://arxiv.org/pdf/2603.19979" target="_blank" rel="noopener"><span data-i18n="footer.report">Technical Report</span>
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 11.5l7-7M5.5 4.5h6v6"/></svg></a>
-    </div>
-    <div class="foot-bot">
-      <span data-i18n="footer.copy">X-World is developed by the XPeng GWM Team © 2026</span>
-      <a class="mono" href="https://arxiv.org/abs/2603.19979" target="_blank" rel="noopener">arXiv:2603.19979</a>
-    </div>
-  </div>
-</footer>
-
-<script>
-(function(){
-  /* ---------- i18n ---------- */
-  var ZH = {
-    'nav.intro':'简介','nav.arch':'工作原理','nav.results':'数据','nav.demos':'演示','nav.menu':'菜单',
-    'hero.badge':'XPeng GWM 团队','hero.kicker':'可控制的以自我为中心的多摄世界模型','hero.subtitle':'让汽车学会“预见未来”',
-    'hero.tagline':'一个会“思考”驾驶场景的 AI 系统，就像给汽车装上了“想象力”，能提前“想出”路况的变化',
-    'hero.cta1':'了解更多','hero.cta2':'技术报告',
-    'spec1.k':'输入','spec1.v':'7 路环视摄像头','spec2.k':'条件','spec2.v':'自车动作 + 场景控制',
-    'spec3.k':'时长','spec3.v':'数十秒稳定生成','spec4.k':'风格','spec4.v':'文本驱动天气与时段',
-    'intro.label':'简介','intro.title':'这是什么',
-    'intro.desc':'给定当前路况和驾驶操作，X-World 能“想出”几秒后的道路画面，让汽车在虚拟世界里学开车，不必上路冒险。',
-    'p1.title':'7 个摄像头“一起看”','p1.desc':'7 路摄像头拼成一致的 360° 全景，不错位、不模糊。','p1.tag':'跨视角一致性',
-    'p2.title':'连续画面“不卡顿”','p2.desc':'连续生成数十秒，帧帧衔接。','p2.tag':'时序连贯性',
-    'p3.title':'让你“指挥”它','p3.desc':'听从驾驶指令，天气、时段、地域随意切换。','p3.tag':'精准可控性',
-    'arch.label':'模型架构','arch.title':'它是怎么工作的',
-    'arch.desc':'输入多摄历史画面与未来动作序列，X-World 生成与之对应的多摄未来视频。',
-    'm.badge.obs':'观测','m.badge.gen':'生成',
-    'm.in.t':'多视角历史画面','m.in.d':'7 路相机 · 已观测',
-    'm.core.t':'多视角 DiT','m.core.k':'视角-时序注意力','m.core.d':'3D 因果 VAE · WAN 2.2 5B',
-    'm.c1':'自车动作','m.c2':'交通参与者 · 道路','m.c3':'文本提示',
-    'm.out.t':'多视角未来画面','m.out.d':'7 路同步视频流',
-    'm.k1.t':'视角-时序注意力','m.k1.s':'7 路视角之间、前后帧之间都保持一致',
-    'm.k2.t':'解耦条件注入','m.k2.s':'adaLN-Zero + 独立交叉注意力分支',
-    'm.k3.t':'两阶段训练','m.k3.a':'步去噪','m.k3.b':'流式推演',
-    'results.label':'技术实力','results.title':'眼见为实的领先一代',
-    'results.desc':'迭代更快、推演更长、场景成本大幅降低。',
-    's1.unit':'天','s1.title':'端到端模型迭代周期','s1.desc':'智驾能力提升 2 倍',
-    's2.title':'场景覆盖','s2.desc':'连贯预测场景变化','s3.title':'场景生成成本降低','s3.desc':'研发效率大幅提升',
-    'demos.label':'核心能力','demos.title':'能做什么','demos.desc':'四大核心功能演示',
-    'd1.tag':'功能一','d1.title':'操作控制演示','d1.desc':'输入“左转”指令，生成的画面就会向左转；输入“加速”，画面就会向前飞驰。AI 完美理解你的意图并生成相应画面。',
-    'd2.tag':'功能二','d2.title':'多车场景控制','d2.desc':'可以控制画面中其他车辆的行为：让它们加速、减速、变道，就像你在指挥一个真实的交通场景。',
-    'd3.tag':'功能三','d3.title':'长距离预测','d3.desc':'连续生成几十秒的画面都不会“崩溃”，画面始终保持稳定和连贯，就像在看一部真实的行车记录仪。',
-    'd4.tag':'功能四','d4.title':'风格变换','d4.desc':'一句话就能改变天气和时间：想要“雨天”？想要“黑夜”？甚至是“德国的街道”？一句话就能生成。',
-    'summary.title':'为什么这么重要？',
-    'summary.desc':'不只是视频生成器，更是一位“虚拟驾驶教练”：让汽车在安全的虚拟环境中，学会应对各种天气、时段与路况。',
-    'f1':'安全可控','f2':'成本更低','f3':'场景无限','f4':'训练更快',
-    'cite.label':'引用','cite.title':'引用 X-World','cite.desc':'如果 X-World 对你的研究有帮助，欢迎引用我们的技术报告。','bib.copy':'复制',
-    'footer.report':'技术报告','footer.copy':'X-World 由 XPeng GWM 团队开发 © 2026'
-  };
-  var STR = {
-    en:{title:'X-World — Controllable Ego-Centric Multi-Camera World Model',scenario:'Scenario',play:'Play',pause:'Pause'},
-    zh:{title:'X-World - 可控制的以自我为中心的多摄世界模型',scenario:'场景',play:'播放',pause:'暂停'}
-  };
-  var EN = {};
-  var textEls = document.querySelectorAll('[data-i18n]');
-  var altEls = document.querySelectorAll('[data-i18n-alt]');
-  var ariaEls = document.querySelectorAll('[data-i18n-aria]');
-  textEls.forEach(function(el){ EN[el.dataset.i18n] = el.textContent; });
-  altEls.forEach(function(el){ EN[el.dataset.i18nAlt] = el.alt; });
-  ariaEls.forEach(function(el){ EN[el.dataset.i18nAria] = el.getAttribute('aria-label'); });
-
-  var lang = 'en';
-  try { if (localStorage.getItem('xw-lang') === 'zh') lang = 'zh'; } catch(e){}
-
-  function setLang(l){
-    lang = l;
-    var dict = l === 'zh' ? ZH : EN;
-    document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en';
-    document.title = STR[l].title;
-    textEls.forEach(function(el){ var v = dict[el.dataset.i18n]; if (v != null) el.textContent = v; });
-    altEls.forEach(function(el){ var v = dict[el.dataset.i18nAlt]; if (v != null) el.alt = v; });
-    ariaEls.forEach(function(el){ var v = dict[el.dataset.i18nAria]; if (v != null) el.setAttribute('aria-label', v); });
-    document.querySelectorAll('.lang button').forEach(function(b){ b.classList.toggle('on', b.dataset.lang === l); });
-    updateScenarioLabel(); updatePlayLabel();
-    try { localStorage.setItem('xw-lang', l); } catch(e){}
-  }
-  document.querySelectorAll('.lang button').forEach(function(b){
-    b.addEventListener('click', function(){ setLang(b.dataset.lang); });
-  });
-
-  /* ---------- nav ---------- */
-  var nav = document.getElementById('nav');
-  var progress = document.getElementById('progress');
-  var menuBtn = document.getElementById('menuBtn');
-  function onScroll(){
-    var y = window.scrollY, h = document.documentElement.scrollHeight - innerHeight;
-    nav.classList.toggle('scrolled', y > 8);
-    progress.style.transform = 'scaleX(' + (h > 0 ? y / h : 0) + ')';
-  }
-  addEventListener('scroll', onScroll, {passive:true}); onScroll();
-  menuBtn.addEventListener('click', function(){
-    var open = nav.classList.toggle('open');
-    menuBtn.setAttribute('aria-expanded', open);
-  });
-  document.querySelectorAll('#navLinks a').forEach(function(a){
-    a.addEventListener('click', function(){ nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', false); });
-  });
-  var links = {};
-  document.querySelectorAll('#navLinks a').forEach(function(a){ links[a.getAttribute('href').slice(1)] = a; });
-  var spy = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if (!e.isIntersecting) return;
-      Object.keys(links).forEach(function(k){ links[k].classList.toggle('active', k === e.target.id); });
-    });
-  }, {rootMargin:'-45% 0px -50% 0px'});
-  ['top','intro','architecture','results','demos','summary'].forEach(function(id){
-    var el = document.getElementById(id); if (el) spy.observe(el);
-  });
-
-  /* ---------- radar (7-camera surround) ---------- */
-  var NS = 'http://www.w3.org/2000/svg';
-  function mk(tag, attrs, parent){ var el = document.createElementNS(NS, tag); for (var k in attrs) el.setAttribute(k, attrs[k]); if (parent) parent.appendChild(el); return el; }
-  function pt(r, deg){ var a = (deg - 90) * Math.PI / 180; return [+(r * Math.cos(a)).toFixed(2), +(r * Math.sin(a)).toFixed(2)]; }
-  var R = 232, CAMS = 7, SPREAD = 21;
-  var ticks = document.getElementById('ticks');
-  for (var d = 0; d < 360; d += 3){
-    var major = d % 30 === 0, p1 = pt(R + 2, d), p2 = pt(major ? R + 14 : R + 8, d);
-    mk('line', {x1:p1[0], y1:p1[1], x2:p2[0], y2:p2[1], 'class':'tick' + (major ? ' major' : '')}, ticks);
-  }
-  var fovs = document.getElementById('fovs'), nodes = document.getElementById('nodes'), packets = document.getElementById('packets');
-  for (var i = 0; i < CAMS; i++){
-    var c = i * 360 / CAMS, s = pt(44, c), a1 = pt(R, c - SPREAD), a2 = pt(R, c + SPREAD), e = pt(R, c);
-    var f = mk('path', {d:'M' + s + 'L' + a1 + 'A' + R + ' ' + R + ' 0 0 1 ' + a2 + 'Z', 'class':'fov'}, fovs);
-    f.style.animationDelay = (i * 0.6) + 's';
-    mk('line', {x1:s[0], y1:s[1], x2:e[0], y2:e[1], 'class':'ray'}, fovs);
-    mk('circle', {cx:s[0], cy:s[1], r:4.5, 'class':'node'}, nodes);
-    var lp = pt(R + 32, c);
-    var t = mk('text', {x:lp[0], y:lp[1], 'text-anchor':'middle', 'dominant-baseline':'middle', 'class':'cam-label'}, nodes);
-    t.textContent = 'CAM 0' + (i + 1);
-    var dot = mk('circle', {r:2.6, 'class':'packet', opacity:0}, packets);
-    mk('animateMotion', {path:'M' + e + 'L' + s, dur:'2.6s', begin:(i * 0.37) + 's', repeatCount:'indefinite'}, dot);
-    mk('animate', {attributeName:'opacity', values:'0;1;1;0', keyTimes:'0;.15;.85;1', dur:'2.6s', begin:(i * 0.37) + 's', repeatCount:'indefinite'}, dot);
-  }
-  var sweep = document.getElementById('sweep'), w1 = pt(R, -24), w2 = pt(R, 0);
-  mk('path', {d:'M0 0L' + w1 + 'A' + R + ' ' + R + ' 0 0 1 ' + w2 + 'Z', fill:'url(#sweepGrad)'}, sweep);
-  mk('line', {x1:0, y1:0, x2:w2[0], y2:w2[1], stroke:'#00b4ff', 'stroke-width':1.4, 'stroke-opacity':.8}, sweep);
-
-  /* ---------- reveal ---------- */
-  var rv = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('in'); rv.unobserve(e.target); } });
-  }, {threshold:.12, rootMargin:'0px 0px -6% 0px'});
-  document.querySelectorAll('.rv').forEach(function(el){ rv.observe(el); });
-
-  /* ---------- count up ---------- */
-  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var cu = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if (!e.isIntersecting) return;
-      cu.unobserve(e.target);
-      var card = e.target, num = card.querySelector('.num');
-      var to = parseFloat(num.dataset.count), dec = +num.dataset.dec, t0 = null, dur = 1800;
-      card.classList.add('on');
-      if (reduce) return;
-      function step(ts){
-        if (!t0) t0 = ts;
-        var k = Math.min((ts - t0) / dur, 1), v = to * (1 - Math.pow(1 - k, 4));
-        num.textContent = v.toFixed(dec);
-        if (k < 1) requestAnimationFrame(step);
-      }
-      num.textContent = (0).toFixed(dec);
-      requestAnimationFrame(step);
-    });
-  }, {threshold:.4});
-  document.querySelectorAll('.stat').forEach(function(m){ cu.observe(m); });
-
-  /* ---------- demos ---------- */
-  var VIDEOS = ['video/002.mp4', 'video/003.mp4', 'video/004.mp4', 'video/001.mp4'];
-  var DEMOS = ['01_action-control','02_multi-agent-control','03_long-horizon-prediction','04_style-transfer'];
-  var video = document.getElementById('video'), player = document.getElementById('player'), screen = document.getElementById('screen');
-  var playBtn = document.getElementById('playBtn'), fill = document.getElementById('trackFill'), timeEl = document.getElementById('time');
-  var scnLabel = document.getElementById('scnLabel'), scenes = document.querySelectorAll('.scene');
-  var cur = 0, inView = false, userPaused = false, loaded = false;
-
-  function pad(n){ return String(n).padStart(2, '0'); }
-  function fmt(s){ s = Math.floor(s || 0); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); }
-  function updateScenarioLabel(){ scnLabel.textContent = STR[lang].scenario + ' ' + pad(cur + 1) + ' / ' + pad(DEMOS.length); }
-  function updatePlayLabel(){ playBtn.setAttribute('aria-label', video.paused ? STR[lang].play : STR[lang].pause); }
-  function tryPlay(){ var p = video.play(); if (p && p.catch) p.catch(function(){}); }
-
-  function select(i, autoplay){
-    cur = i; loaded = true;
-    scenes.forEach(function(s, k){ s.classList.toggle('on', k === i); s.querySelector('.bar i').style.height = '0'; });
-    updateScenarioLabel();
-    screen.classList.add('switching');
-    setTimeout(function(){
-      video.poster = 'assets/posters/' + DEMOS[i] + '.jpg';
-      video.src = VIDEOS[i];
-      video.load();
-      fill.style.width = '0';
-      if (autoplay) tryPlay();
-      screen.classList.remove('switching');
-    }, 280);
-  }
-  scenes.forEach(function(s){
-    s.addEventListener('click', function(){ userPaused = false; select(+s.dataset.i, true); });
-  });
-  playBtn.addEventListener('click', function(){
-    if (!loaded){ userPaused = false; select(cur, true); return; }
-    if (video.paused){ userPaused = false; tryPlay(); } else { userPaused = true; video.pause(); }
-  });
-  video.addEventListener('click', function(){ playBtn.click(); });
-  video.addEventListener('play', function(){ player.classList.remove('paused'); updatePlayLabel(); });
-  video.addEventListener('pause', function(){ player.classList.add('paused'); updatePlayLabel(); });
-  video.addEventListener('timeupdate', function(){
-    var k = video.duration ? video.currentTime / video.duration : 0;
-    fill.style.width = (k * 100) + '%';
-    scenes[cur].querySelector('.bar i').style.height = (k * 100) + '%';
-    timeEl.textContent = fmt(video.currentTime) + ' / ' + fmt(video.duration);
-  });
-  video.addEventListener('loadedmetadata', function(){ timeEl.textContent = fmt(0) + ' / ' + fmt(video.duration); });
-  video.addEventListener('ended', function(){ select((cur + 1) % DEMOS.length, inView && !userPaused); });
-  document.getElementById('track').addEventListener('click', function(e){
-    if (!video.duration) return;
-    var r = this.getBoundingClientRect();
-    video.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * video.duration;
-  });
-  new IntersectionObserver(function(entries){
-    inView = entries[0].isIntersecting;
-    if (inView && !userPaused && !reduce){
-      if (!loaded) select(cur, true); else if (video.paused) tryPlay();
-    } else if (!inView && !video.paused){ video.pause(); }
-  }, {threshold:.35}).observe(player);
-
-  /* ---------- method: view × time token grid ---------- */
-  var tok = document.getElementById('tokGrid');
-  for (var tr = 0; tr < 7; tr++) for (var tcol = 0; tcol < 12; tcol++){
-    var inCol = tcol === 8, inRow = tr === 2;
-    mk('circle', {cx:6 + tcol * 11, cy:6 + tr * 10, r:inCol && inRow ? 3.4 : 2.2,
-      fill:inCol && inRow ? '#fff' : inCol ? '#7fd8ff' : inRow ? 'rgba(127,216,255,.6)' : 'rgba(255,255,255,.22)'}, tok);
-  }
-
-  /* ---------- citation: copy BibTeX ---------- */
-  var bibCopy = document.getElementById('bibCopy'), bibLbl = document.getElementById('bibCopyLbl'), bibTimer = null;
-  function bibText(){
-    return [].map.call(document.querySelectorAll('#bibCode .ln'), function(l){ return l.textContent; }).join('\n');
-  }
-  function copyFallback(text){
-    var ta = document.createElement('textarea');
-    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch(e){}
-    ta.remove();
-  }
-  bibCopy.addEventListener('click', function(){
-    var text = bibText();
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function(){ copyFallback(text); });
-    else copyFallback(text);
-    bibCopy.classList.add('ok');
-    bibLbl.textContent = lang === 'zh' ? '已复制' : 'Copied';
-    clearTimeout(bibTimer);
-    bibTimer = setTimeout(function(){ bibCopy.classList.remove('ok'); bibLbl.textContent = (lang === 'zh' ? ZH : EN)['bib.copy']; }, 1800);
-  });
-
-  setLang(lang);
-})();
-</script>
+    </section>
+  </main>
+  <footer class="site-footer container"><p>X-World 1.0 <span>© 2026 XPeng GWM Team</span></p><a href="#top"><span data-en="Back to top" data-zh="返回顶部">Back to top</span><span aria-hidden="true">↑</span></a></footer>
 </body>
 </html>
